@@ -1,0 +1,35 @@
+/**
+I'm a function
+*/
+int f() 
+{
+    int a,b,c,d;
+    a = 0;
+    while(a < 10) 
+    {
+    a += 2;b-=2;c*=3;d/=4;
+    c=a&b;
+    c=a&&b;
+    c=a||b;
+    c=a|b;
+    c=!b;
+    }
+    return a;
+}
+
+int main()
+{
+    int a;
+    a = -12.34e5;
+    if(a==6.7) 
+    {
+        int a;
+        a=a+12e-3;
+        // Comment line
+        /*shen zhe 
+        sssss
+        ffff
+        */
+    }
+    return 0;
+}

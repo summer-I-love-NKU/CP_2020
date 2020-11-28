@@ -1,0 +1,128 @@
+-------------  设计思考   ------------
+
+int a=10; //结点有 int a 10 不需要赋值号，没用！！！已经知道是赋值语句了
+
+lno@7	@14	statement	children: [@15 @16 @17 	] stmt: decl
+lno@7	@15	type type: int
+lno@7	@16	variable varname: a
+lno@7	@17	const type: int
+
+
+lex和yacc是如何连起来呢？？？ yylex函数怎么在哪呢？？
+
+---------------    bug    ----------------------
+
+
+
+
+#-std=c++11:
+    flex --noyywrap -o src/main.lex.yy.cpp  src/main.lex 
+    bison -o src/main.tab.cpp --defines=src/main.tab.h -v src/main.y
+    在这里添加！！！？？？
+    g++ -x c++-header （（（-std=c++11 ）））-o src/pch.h.gch -c src/pch.h
+
+
+
+    In file included from /usr/include/c++/5/unordered_map:35:0,
+                    from src/pch.h:19:
+    /usr/include/c++/5/bits/c++0x_warning.h:32:2: error: #error This file requires compiler and library support for the ISO C++ 2011 standard. This support must be enabled with the -std=c++11 or -std=gnu++11 compiler options.
+    #error This file requires compiler and library support \
+    ^
+    Makefile:14: recipe for target 'src/pch.h.gch' failed
+
+
+不得不在yacc中写入c++代码用于调试！！！
+
+------------------------------------
+line@1  node@3  stmt  children: [ @0 @1 @2 ]  stmt_type:decl
+line@2  node@7  stmt  children: [ @4 @5 @6 ]  stmt_type:decl
+line@3  node@11  stmt  children: [ @8 @9 @10 ]  stmt_type:decl
+root!!!
+line@0  node@12  prog  children: [ @3 @11 ]  error!!!
+Hello!!!!!!!!!!
+root!=NULL
+line@0  node@0  prog  children: [ @3 @11 ]  error!!!
+line@1  node@1  stmt  children: [ @0 @1 @2 ]  stmt_type:decl
+Segmentation fault
+--------------------------------------------------
+
+开始的ID
+line@1  node@3  stmt  children: [ @0 @1 @2 ]  stmt_type: decl
+line@2  node@7  stmt  children: [ @4 @5 @6 ]  stmt_type: decl
+line@3  node@11  stmt  children: [ @8 @9 @10 ]  stmt_type: decl
+root!!!
+line@0  node@12  prog  children: [ @3 @7 @11 ]  
+Hello!!!!!!!!!!
+root!=NULL
+
+边遍历边打印输出，修改后的ID  
+line@0  node@0  prog  children: [ @3 @7 @11 ] （3 7 11还没被修改为 1 5 9） 
+0子结点不为空！！！
+line@1  node@1  stmt  children: [ @0 @1 @2 ]  stmt_type: decl
+1子结点不为空！！！
+Segmentation fault
+Makefile:31: recipe for target 'test' failed
+
+-------
+这次从3 11 变成了3 7 11 
+修改了statements产生式语义动作的处理，不能覆盖了，要伴随指针移动，助教写的有点问题吧？？
+
+所以还是遍历有问题？？
+--------------------------------------------------------------
+line@1  node@3  stmt  children: [ @0 @1 @2 ]  stmt_type: decl
+line@2  node@7  stmt  children: [ @4 @5 @6 ]  stmt_type: decl
+line@3  node@11  stmt  children: [ @8 @9 @10 ]  stmt_type: decl
+root!!!
+line@0  node@12  prog  children: [ @3 @7 @11 ]  
+Hello!!!!!!!!!!
+root!=NULL
+12结点开始打印！！！
+line@0  node@0  prog  children: [ @3 @7 @11 ]  
+0子结点不为空！！！
+3结点开始打印！！！
+line@1  node@1  stmt  children: [ @0 @1 @2 ]  stmt_type: decl
+1子结点不为空！！！
+0结点开始打印！！！------深入到了，然后触发段错误
+Segmentation fault
+
+
+                 0 ->根结点
+        1        5        9   ->三个定义语句
+      2 3 4    6 7 8   10 11 12   ->int a=1;之类的
+
+    所以是深入到了2号结点触发错误
+
+看到了，打印结点信息时printNodeInfo：
+叶子结点呀！！！没有孩子！！！
+//这里别忘了判断条件！！！有无孩子呀！！！
+    if(this->child!=nullptr)
+        this->printChildrenId();
+----------------------------------------
+
+Hello!!!!!!!!!!
+root!=NULL
+line@0  node@0  prog    children: [ @1 @8 @15 ]  
+line@1  node@1  stmt  stmt_type: decl  children: [ @2 @5 @7 ]  
+line@1  node@2  type  type:int  
+line@1  node@3  var  var_name:a  
+line@1  node@4  const  const_type: int const_value: 10    
+line@1  node@5  var  var_name:a  
+line@1  node@6  const  const_type: int const_value: 10    
+line@1  node@7  const  const_type: int const_value: 10    
+line@2  node@8  stmt  stmt_type: decl  children: [ @9 @12 @14 ]  
+line@2  node@9  type  type:int  
+line@2  node@10  var  var_name:b  
+line@2  node@11  const  const_type: int const_value: 11    
+line@2  node@12  var  var_name:b  
+line@2  node@13  const  const_type: int const_value: 11    
+line@2  node@14  const  const_type: int const_value: 11    
+line@3  node@15  stmt  stmt_type: decl  children: [ @16 @19 @21 ]  
+line@3  node@16  type  type:int  
+line@3  node@17  var  var_name:c  
+line@3  node@18  const  const_type: int const_value: 12    
+line@3  node@19  var  var_name:c  
+line@3  node@20  const  const_type: int const_value: 12    
+line@3  node@21  const  const_type: int const_value: 12 
+
+显然多了22-13=9个！！！
+---------------------------------------------------------

@@ -1,0 +1,115 @@
+COM_BEGIN     /*            
+COM_END       */            
+KEY           int           int           
+ID            f             1             
+LP            (             
+RP            )             
+LPB           {             
+KEY           int           int           
+ID            a             2             
+COMMA         ,             
+ID            b             3             
+COMMA         ,             
+ID            c             4             
+COMMA         ,             
+ID            d             5             
+DELIM         ;             
+ID            a             2             
+ASSIGN        =             
+NUM           0             0             
+DELIM         ;             
+KEY           while         while         
+LP            (             
+ID            a             2             
+LT            <             
+NUM           10            10            
+RP            )             
+LPB           {             
+ID            a             2             
+ADD_ASSIGN    +=            
+NUM           2             2             
+DELIM         ;             
+ID            b             3             
+SUB_ASSIGN    -=            
+NUM           2             2             
+DELIM         ;             
+ID            c             4             
+MUL_ASSIGN    *=            
+NUM           3             3             
+DELIM         ;             
+ID            d             5             
+DIV_ASSIGN    /=            
+NUM           4             4             
+DELIM         ;             
+ID            c             4             
+ASSIGN        =             
+ID            a             2             
+BIT_AND       &             
+ID            b             3             
+DELIM         ;             
+ID            c             4             
+ASSIGN        =             
+ID            a             2             
+AND           &&            
+ID            b             3             
+DELIM         ;             
+ID            c             4             
+ASSIGN        =             
+ID            a             2             
+OR            ||            
+ID            b             3             
+DELIM         ;             
+ID            c             4             
+ASSIGN        =             
+ID            a             2             
+BIT_OR        |             
+ID            b             3             
+DELIM         ;             
+ID            c             4             
+ASSIGN        =             
+NOT           !             
+ID            b             3             
+DELIM         ;             
+RPB           }             
+KEY           return        return        
+ID            a             2             
+DELIM         ;             
+RPB           }             
+KEY           int           int           
+KEY           main          main          
+LP            (             
+RP            )             
+LPB           {             
+KEY           int           int           
+ID            a             2             
+DELIM         ;             
+ID            a             2             
+ASSIGN        =             
+NUM           -12.34e5      -1.234e+06    
+DELIM         ;             
+KEY           if            if            
+LP            (             
+ID            a             2             
+EQ            ==            
+NUM           6.7           6.7           
+RP            )             
+LPB           {             
+KEY           int           int           
+ID            a             2             
+DELIM         ;             
+ID            a             2             
+ASSIGN        =             
+ID            a             2             
+ADD           +             
+NUM           12e-3         0.012         
+DELIM         ;             
+COM_LINE      //            
+COM_BEGIN     /*            
+COM_END       */            
+RPB           }             
+KEY           return        return        
+NUM           0             0             
+DELIM         ;             
+RPB           }             
+
+行数: 32      
