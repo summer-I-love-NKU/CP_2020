@@ -17,11 +17,10 @@ int main()
         yyparse();
     }while(!feof(yyin));
 
-    cout << "Hello!!!!!!!!!!" << endl;
+    // cout << "Hello!!!" << endl;
     
     if (root != NULL)
     {
-        cout << "root!=NULL" << endl;
         root->genNodeId(); 
         root->printAST();
     }

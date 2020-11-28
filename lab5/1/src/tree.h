@@ -24,20 +24,41 @@ enum NodeType//-------结点类型
 enum OperatorType//---------运算类型
 {
     OP_EQ,  // ==
+    OP_ADD,
+    OP_SUB,
+    OP_MUL,
+    OP_DIV,
+    OP_SELF_ADD,
+    OP_SELF_SUB,
+    OP_MOD,
+    OP_NEG,
+    OP_AND,
+    OP_OR,
+    OP_NOT,
+    OP_LESS_EQ,
+    OP_LESS_THAN,
+    OP_MORE_EQ,
+    OP_MORE_THAN,
+    OP_NOT_EQ,
+
 };
 
 enum StmtType {//------------语句类型
     STMT_SKIP,
     STMT_DECL,
+    STMT_ASSIGN,
+    STMT_ADD_ASSIGN,
+    STMT_SUB_ASSIGN,
+    STMT_MUL_ASSIGN,
+    STMT_DIV_ASSIGN,
+    STMT_PRINTF,
+    STMT_SCANF,
+    STMT_IF,
+    STMT_IF_ELSE,
+    STMT_WHILE,
 }
 ;
-// enum DeclType {//------------语句类型
-//     TYPE_INT,
-//     TYPE_CHAR,
-//     TYPE_BOOL,
-//     TYPE_STRING,
-// }
-;
+
 struct TreeNode {//-------------结点类（结构体）
 public:
     //-----------属性
@@ -51,10 +72,10 @@ public:
         OperatorType op_type;  // 如果是表达式
     //TYPE
         //注意定义的是一个类对象，需要用this.type.type！！！
-        Type* type;  // 对于常量+变量、类型、表达式结点，有类型。 定义在type.h
+        Type* type;  // 对于常量+变量、类型（用于声明或定义）、表达式结点，有类型。 定义在type.h
     //STMT
         StmtType stmt_type;//语句类型
-        Type* decl_type;//声明类型
+        // Type* decl_type;//声明类型
     //CONST
         int int_val;
         char ch_val;

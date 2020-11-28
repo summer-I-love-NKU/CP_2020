@@ -9,7 +9,7 @@ int yyerror( char const * );
 %}
 %defines//???
 
-%start program//???开始符号？是不是可以默认？之前实验似乎没定义
+// %start program//???开始符号？是不是可以默认？之前实验似乎没定义
 
 %token ID INTEGER
 %token IF ELSE WHILE

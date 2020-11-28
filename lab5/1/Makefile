@@ -1,31 +1,32 @@
-.PHONY: all clean main run test debug
+CC := g++
+CFLAGS := -Wall -Wextra -std=c++11 # without debug
+TARGET := ./bin/main
+
 all: run
 
-# `main.y`语法分析文件 
-# 通过bison编译生成`main.tab.hh` `main.tab.cc` 
-# **注意为了生成头文件需要在文件中加入`%option defines`** 
-# 在文件中引用`common.h`来使用自定义语法树结点方法 
-# 加入`yylex()`函数声明来允许调用词法分析方法 
-# 生成的整个过程通过`yyparse()`进行调用
-main.tab.cc: main.y
-	bison -o main.tab.cc -v main.y
+src/main.l.yy.c: src/main.l
+	 flex --noyywrap -o src/main.l.yy.cpp  src/main.l 
 
-# `main.l`词法分析文件 通过flex编译后生成`lex.yy.cc` 
-# 在文件中引用`common.h`来使用自定义语法树结点的方法 
-# 引用`main.tab.hh`来使用语法分析过程中声明的token 
-# 配合语法分析器使用 生成的整个过程通过`yylex()`进行调用
-lex.yy.cc: main.l
-	flex -o lex.yy.cc main.l
+src/main.tab.c: src/main.y
+	bison -o src/main.tab.cpp --defines=src/main.tab.h -v src/main.y
 
-main: lex.yy.cc main.tab.cc
-	g++ $(shell ls *.cpp *.cc) -o main.out
+src/pch.h.gch: src/pch.h
+	g++ -x c++-header -std=c++11 -o src/pch.h.gch -c src/pch.h
 
-run: main
-	./main.out
-test:main
-	for file in $(basename $(shell find test/*.c)); \
-	do \
-		./main.out <$$file.c >$$file.res; \
-	done
+lex: src/main.l.yy.c
+
+yacc: src/main.tab.c
+
+main: src/pch.h.gch
+	$(CC) $(CFLAGS) $(shell ls ./src/*.cpp) -o ./bin/main
+
+.PHONY: all clean main run lex yacc test debug link testscope asm nasm example-code out
+
+run: lex yacc main test
+
 clean:
-	rm -f *.output *.yy.* *.tab.* *.out test/*.res
+	rm -f src/*.output src/main.l.yy.cpp src/main.tab.cpp src/main.tab.h src/main.output src/pch.h.gch $(TARGET) *.o ./bin/* 
+
+test: 
+	./bin/main <./tests/test.c  >./tests/result.txt
+	cat ./tests/result.txt

@@ -1,0 +1,39 @@
+0 |  node@0   program                             children: @0 -> [ @1 @16 ]  
+1 |  node@1   stmt         stmt_type: if else     children: @1 -> [ @2 @5 @9 ]  
+1 |  node@2   expr         expr_type: >           children: @2 -> [ @3 @4 ]  
+1 |  node@3   var           var_name: a           
+1 |  node@4   const       const_type: int         
+3 |  node@5   stmt         stmt_type: decl        children: @5 -> [ @6 @7 @8 ]  
+3 |  node@6   type              type: int         
+3 |  node@7   var           var_name: a           
+3 |  node@8   const       const_type: int         
+7 |  node@9   stmt         stmt_type: while       children: @9 -> [ @10 @13 ]  
+7 |  node@10  expr         expr_type: !=          children: @10 -> [ @11 @12 ]  
+7 |  node@11  var           var_name: d           
+7 |  node@12  const       const_type: int         
+9 |  node@13  stmt         stmt_type: add_assign  children: @13 -> [ @14 @15 ]  
+9 |  node@14  var           var_name: e           
+9 |  node@15  const       const_type: int         
+12|  node@16  stmt         stmt_type: if          children: @16 -> [ @17 @20 ]  
+12|  node@17  expr         expr_type: ==          children: @17 -> [ @18 @19 ]  
+12|  node@18  var           var_name: a           
+12|  node@19  const       const_type: int         
+13|  node@20  stmt         stmt_type: decl        children: @20 -> [ @21 @22 @23 ]  
+13|  node@21  type              type: int         
+13|  node@22  var           var_name: m           
+13|  node@23  const       const_type: int         
+
+
+if(a>1)
+{
+    int a = 3;
+}
+else
+{
+    while (d!=1)
+    {
+        e += 3;
+    }
+}
+if(a==1)
+{int m = 3;}

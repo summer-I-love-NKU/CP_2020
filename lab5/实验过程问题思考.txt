@@ -1,15 +1,3 @@
--------------  设计思考   ------------
-
-int a=10; //结点有 int a 10 不需要赋值号，没用！！！已经知道是赋值语句了
-
-lno@7	@14	statement	children: [@15 @16 @17 	] stmt: decl
-lno@7	@15	type type: int
-lno@7	@16	variable varname: a
-lno@7	@17	const type: int
-
-
-lex和yacc是如何连起来呢？？？ yylex函数怎么在哪呢？？
-
 ---------------    bug    ----------------------
 
 
@@ -125,4 +113,197 @@ line@3  node@20  const  const_type: int const_value: 12
 line@3  node@21  const  const_type: int const_value: 12 
 
 显然多了22-13=9个！！！
+
+一开始是13个结点0-12,没问题，  遍历生成ID有问题！！！
+
+-------------我的错误的遍历代码---------------------------------
+ // if (this->child != nullptr)
+    // {////////cout << this->nodeID<<"子结点不为空！！！" << endl;----用于debug
+        
+
+    //     this->child->genNodeId();
+    //     //this->child->sibling->genNodeId();
+
+    //     TreeNode *p = this->child->sibling;
+    //     while (p!=nullptr)
+    //     {
+    //         p->genNodeId();
+    //         p = p->sibling;
+    //     }
+    // }
+    // else
+    // {////////cout << this->nodeID<<"子结点为空！！！" << endl;----用于debug
+        
+    //     TreeNode *p = this->sibling;
+    //     while (p!=nullptr)
+    //     {
+    //         p->nodeID = new0_nodeID++;
+    //         p = p->sibling;
+    //     }
+    // }
+    ------------------------
+
+啊直接参考网上的先序遍历！！！很简单！！！
+
+-------------------
+void TreeNode::genNodeId()
+{
+    if(this==nullptr)
+        return;
+    this->nodeID = new0_nodeID++;
+
+    this->child->genNodeId();
+    this->sibling->genNodeId();
+    
+}
+---------------------------
+
+Hello!!!!!!!!!!
+root!=NULL
+line@0   node@0   prog                           children: [ @1 @5 @9 ]  
+line@1   node@1   stmt        stmt_type: decl    children: [ @2 @3 @4 ]  
+line@1   node@2   type             type: int     
+line@1   node@3   var          var_name: a       
+line@1   node@4   const      const_type: int      
+line@2   node@5   stmt        stmt_type: decl    children: [ @6 @7 @8 ]  
+line@2   node@6   type             type: int     
+line@2   node@7   var          var_name: b       
+line@2   node@8   const      const_type: int      
+line@3   node@9   stmt        stmt_type: decl    children: [ @10 @11 @12 ]  
+line@3   node@10  type             type: int     
+line@3   node@11  var          var_name: c       
+line@3   node@12  const      const_type: int    
 ---------------------------------------------------------
+
+
+
+git的问题----直接重新初始化本地仓库，强制重新提交吧
+        https://www.cnblogs.com/chinxi/p/6139469.html
+        https://blog.csdn.net/qq_39551390/article/details/80889439
+
+        （error: object file .git/objects/* is empty...）的解决方案及对git版本库文件的了解
+
+        error: object file .git/objects/9a/83e9c5b3d697d12a2e315e1777ceaf27ea1bab is empty
+        fatal: loose object 9a83e9c5b3d697d12a2e315e1777ceaf27ea1bab (stored
+        in .git/objects/9a/83e9c5b3d697d12a2e315e1777ceaf27ea1bab) is corrupt
+
+
+
+-------------------------------------
+
+
+
+11.28.12:00
+至此实现了简单的声明语句的处理
+
+作用域需要符号表！？？？好难？？ 一个作用域一个符号表，符号表数组？？
+
+----------------------------
+开始词法语法的定义！！
+
+注意bool的识别要在ID 之前！！！{BOOL}{。。。}  {ID}{。。。}
+
+
+--------------------------
+shen@ubuntu:~/cp/lab5/2$ make
+flex --noyywrap -o src/main.l.yy.cpp  src/main.l 
+bison -o src/main.tab.cpp --defines=src/main.tab.h -v src/main.y
+
+src/main.y: 警告: 1 shift/reduce conflict [-Wconflicts-sr]
+
+g++ -Wall -Wextra -std=c++11  ./src/main.cpp ./src/main.l.yy.cpp ./src/main.tab.cpp ./src/tree.cpp ./src/type.cpp -o ./bin/main
+src/main.l:14:34: warning: "/*" within comment [-Wcomment]
+ BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
+                                  ^
+src/main.l.yy.cpp: In function ‘int yy_get_next_buffer()’:
+src/main.l.yy.cpp:1334:44: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+  if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+                                            ^
+./bin/main <./tests/test  >./tests/result.txt
+cat ./tests/result.txt
+line@0   node@0   prog                                               children: @0 -> [ @1 @5 ]  
+line@1   node@1   stmt        stmt_type: decl                        children: @1 -> [ @2 @3 @4 ]  
+line@1   node@2   type             type: int                         
+line@1   node@3   var          var_name: a                           
+line@1   node@4   const      const_type: int     const_value: 10    
+line@2   node@5   stmt        stmt_type: decl                        children: @5 -> [ @6 @7 @8 ]  
+line@2   node@6   type             type: int                         
+line@2   node@7   var          var_name: a                           
+line@2   node@8   expr        expr_type: +       expr_value: 2       children: @8 -> [ @9 @10 ]  
+line@2   node@9   const      const_type: bool    const_value: 1    
+line@2   node@10  const      const_type: int     const_value: 2    
+
+
+
+
+
+src/main.y: 警告: 1 shift/reduce conflict [-Wconflicts-sr]?????????
+
+
+????
+
+把1识别成0？？
+因为bool值设置为1 0 会对整型影响！！？？？
+----------------------------------------------------------
+
+
+
+
+if else 语句！！  突然就可以了稀里糊涂？？难道不应该加很多杂乱信息在lex文件？？
+
+---------------------
+shen@ubuntu:~/cp/lab5/2$ make
+flex --noyywrap -o src/main.l.yy.cpp  src/main.l 
+bison -o src/main.tab.cpp --defines=src/main.tab.h -v src/main.y
+src/main.y: 警告: 160 shift/reduce conflicts [-Wconflicts-sr]
+src/main.y: 警告: 1 reduce/reduce conflict [-Wconflicts-rr]
+g++ -Wall -Wextra -std=c++11  ./src/main.cpp ./src/main.l.yy.cpp ./src/main.tab.cpp ./src/tree.cpp ./src/type.cpp -o ./bin/main
+src/main.l:14:34: warning: "/*" within comment [-Wcomment]
+ BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
+                                  ^
+src/main.l.yy.cpp: In function ‘int yy_get_next_buffer()’:
+src/main.l.yy.cpp:1379:44: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+  if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+                                            ^
+./bin/main <./tests/test.c  >./tests/result.txt
+cat ./tests/result.txt
+0 |  node@0   program                             children: @0 -> [ @1 ]  
+1 |  node@1   stmt         stmt_type: if          children: @1 -> [ @2 @5 ]  
+1 |  node@2   expr         expr_type: ==          children: @2 -> [ @3 @4 ]  
+1 |  node@3   var           var_name: a           
+1 |  node@4   const       const_type: int         
+3 |  node@5   stmt         stmt_type: assign      children: @5 -> [ @6 @7 ]  
+3 |  node@6   var           var_name: b           
+3 |  node@7   const       const_type: int 
+
+if(a==1)
+{
+    b = 1;
+}
+------------------
+
+
+突然成功了，但是我的是强制有括号的,定义语句块 （statements）
+
+这个不能运行？？？？
+while (a < 1)
+{
+a /= 3;
+}
+while(a>=888)
+{
+a += 6666;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
