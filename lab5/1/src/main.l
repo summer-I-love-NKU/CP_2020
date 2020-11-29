@@ -9,9 +9,20 @@ int lineno=1;
 词法分析的token给语法分析用？？？
 
 这里的块注释更复杂了？
-{BLOCKCOMMENT}  do nothing ??我改一下？
-记录行号？？
-BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
+    {BLOCKCOMMENT}  do nothing ??我改一下？
+    记录行号？？
+    BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
+
+    BLOCK_COMMENT_ELEMENT_loose  :任意字符，这样不严谨  但是把注释结束符号放前面识别就好了
+    ------------------------------
+    {LINECOMMENT}  {BEGIN LINE_COMMENT;}
+    <LINE_COMMENT>{EOL}        {BEGIN INITIAL;lineno++;}
+
+    {COM_BEGIN}     {BEGIN BLOCK_COMMENT;}
+    <BLOCK_COMMENT>{COM_END} {BEGIN INITIAL;}
+    <BLOCK_COMMENT>{EOL}  {lineno++;}
+    <BLOCK_COMMENT>{BLOCK_COMMENT_ELEMENT_loose} {}
+    -----------------------------------------
 
 node->ch_val = yytext[1];???
 
@@ -35,6 +46,7 @@ SEMICOLON ;
 LINECOMMENT \/\/[^\n]*
 COM_BEGIN  \/\*
 COM_END  \*\/
+BLOCK_COMMENT_ELEMENT_loose .
 
 
 BOOL true|false
@@ -61,9 +73,9 @@ SELF_SUB \-\-
 <LINE_COMMENT>{EOL}        {BEGIN INITIAL;lineno++;}
 
 {COM_BEGIN}     {BEGIN BLOCK_COMMENT;}
-<BLOCK_COMMENT>{EOL}  {lineno++;}
 <BLOCK_COMMENT>{COM_END} {BEGIN INITIAL;}
-
+<BLOCK_COMMENT>{EOL}  {lineno++;}
+<BLOCK_COMMENT>{BLOCK_COMMENT_ELEMENT_loose} {/* do nothing */}
 
 
 "int" return T_INT;
@@ -142,7 +154,7 @@ SELF_SUB \-\-
 {CHAR} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->type = TYPE_CHAR;
-    node->ch_val = yytext[1];
+    node->ch_val = yytext[1];//?????
 
     yylval = node;
     return CHAR;

@@ -9,6 +9,7 @@ TreeNode* p_add_stmt;
 extern int lineno;
 int yylex();
 int yyerror( char const * );
+//------
 %}
 
 
@@ -95,26 +96,25 @@ while_stmt:
 %%
 
 program: 
-statements {root = new TreeNode(0, NODE_PROG); root->addChild($1);};
+statements {root = new TreeNode(0, NODE_PROG); root->addChild($1);}
+;
 
 
 statements:
     statement {
-        //第一条语句一定从这里开始！！！在这里初始化p_add_stmt
         $$ = new TreeNode(lineno, NODE_STMT);
         $$=$1;
-        p_add_stmt=$$;
     }
-    |  statements statement 
+    | statements statement 
     {   
         $$=$1;
-        p_add_stmt->addSibling($2);
-        p_add_stmt=$2;//等同于p_add_stmt=p_add_stmt->sibling;
+        $$->addSibling($2);
+        // cout<<"statement!!!归约"<<endl;cout<<$2->stmt_type<<endl;
     }
     ;
 
 statement:
-    | SEMICOLON  {$$ = new TreeNode(lineno, NODE_STMT); $$->stmt_type = STMT_SKIP;}
+    SEMICOLON  {$$ = new TreeNode(lineno, NODE_STMT); $$->stmt_type = STMT_SKIP;}
     | decl_stmt   SEMICOLON {$$ = $1;}
     | assign_stmt SEMICOLON {$$=$1;}
     | self_op_stmt SEMICOLON {$$=$1;}
@@ -122,7 +122,8 @@ statement:
     | if_else_while_stmt {$$=$1;}
     | LBRACE statements RBRACE {
         //语句加一个总的根结点，解决问题
-        $$ = new TreeNode(lineno, NODE_STMT);
+        $$ = new TreeNode($2->lineno, NODE_STMT);
+        $$->stmt_type=STMT_BLOCK;
         $$->addChild($2);
         }
     ;
@@ -276,8 +277,8 @@ self_op_stmt:
     ;
 
 assign_stmt:
-    IDENTIFIER ASSIGN expr{
-        $$ = new TreeNode($1->lineno, NODE_STMT);
+    IDENTIFIER ASSIGN expr {
+        $$ = new TreeNode(lineno, NODE_STMT);
         $$->stmt_type = STMT_ASSIGN;
         $$->addChild($1);
         $$->addChild($3);
@@ -342,6 +343,7 @@ IO_stmt:
         ;
 if_else_while_stmt:
     IF LPAREN expr RPAREN statement {
+        // cout<<"if !!"<<endl;
         //这里不能用$1,要么直接lineno 要么$3->lineno
         $$ = new TreeNode($3->lineno, NODE_STMT);
         $$->stmt_type=STMT_IF;
@@ -356,7 +358,7 @@ if_else_while_stmt:
         $$->addChild($5);
         $$->addChild($7);
     }
-    | WHILE LPAREN expr RPAREN  statement {
+    | WHILE LPAREN expr RPAREN statement {
         $$ = new TreeNode($3->lineno, NODE_STMT);
         $$->stmt_type=STMT_WHILE;
         $$->addChild($3);

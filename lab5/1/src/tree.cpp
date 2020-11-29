@@ -14,17 +14,19 @@
 
  
  * */
-
 string NODETYPE_name[10] = {"const","var","expr","type","stmt","program","7"};
-string StmtType_name[20] = {"skip", "decl","assign","add_assign","sub_assign","mul_assign",
-"div_assign","printf","scanf","if","if else","while","13"};
+string StmtType_name[20] = {"block","skip", "decl","assign","add_assign","sub_assign","mul_assign",
+"div_assign","printf","scanf","if","if else","while","14"};
 string ValueType_name[5] = {"bool", "int", "char", "string","5"};
 string OperatorType_name[20] = {"==","+","-","*","/","++","--","%","0-","&&","||","!","<=","<",">=",">","!=","18"};
+
 int the_nodeID = 0, new0_nodeID = 0, new_nodeID = 0; //根结点
+int TreeNode::node_num = 0;
 //-------------------------
 //增加孩子结点，就是让孩子之间依次连起来
 void TreeNode::addChild(TreeNode *the_child)
 {
+    
     if (this->child != nullptr)
     {   
         TreeNode *p=this->child;
@@ -39,15 +41,28 @@ void TreeNode::addChild(TreeNode *the_child)
         this->child = the_child;
     }
 }
-//增加兄弟结点
+//增加兄弟结点-----类似修改一下！！！
 void TreeNode::addSibling(TreeNode* the_sibling)
 {
-    this->sibling = the_sibling;
+    if (this->sibling != nullptr)
+    {   
+        TreeNode *p=this;
+        while(p->sibling!=nullptr)
+        {
+            p = p->sibling;
+        }
+        p->sibling = the_sibling;
+    }
+    else
+    {
+        this->sibling = the_sibling;
+    }
 
 }
 //构造函数，初始化，序号自增
 TreeNode::TreeNode(int lineno, NodeType type) 
 {
+    node_num++;
     //第一件事，序号自增,记录行号
     this->nodeID = the_nodeID;
     the_nodeID++;
@@ -161,7 +176,10 @@ void TreeNode::printAST()
 }
 
 
-
+int TreeNode::total_node_num()
+{
+    return node_num;
+}
 // // You can output more info...
 // void TreeNode::printSpecialInfo() {
 //     // switch(this->nodeType){

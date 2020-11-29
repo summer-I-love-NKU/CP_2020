@@ -16,14 +16,16 @@ int main()
     {
         yyparse();
     }while(!feof(yyin));
-
-    // cout << "Hello!!!" << endl;
     
+    // cout << "Hello!!!" << endl;
+
     if (root != NULL)
     {
         root->genNodeId(); 
         root->printAST();
     }
+    // 分号也算结点
+    // cout << "total:"<<root->total_node_num()<< "!!!???" << endl;
     return 0;
 }
 // int main(int argc, char *argv[])

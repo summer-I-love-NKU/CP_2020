@@ -44,6 +44,7 @@ enum OperatorType//---------运算类型
 };
 
 enum StmtType {//------------语句类型
+    STMT_BLOCK,
     STMT_SKIP,
     STMT_DECL,
     STMT_ASSIGN,
@@ -59,7 +60,9 @@ enum StmtType {//------------语句类型
 }
 ;
 
-struct TreeNode {//-------------结点类（结构体）
+
+struct TreeNode
+{ //-------------结点类（结构体）
 public:
     //-----------属性
     //固有属性
@@ -114,6 +117,12 @@ public:
 //这个构造函数？？？！！！new是什么意思
 //TreeNode* node = new TreeNode(lineno, NODE_CONST);
     TreeNode(int lineno, NodeType type);
+
+    static int node_num;
+    int total_node_num();
 };
+
+
+
 
 #endif
