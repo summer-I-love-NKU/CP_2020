@@ -83,11 +83,13 @@ public:
         StmtType stmt_type;//语句类型
         // Type* decl_type;//声明类型
     //CONST
-        int int_val;
-        char ch_val;
-        bool b_val;
-        string str_val;
-    //VAR
+        int int_val;//1
+        char ch_val;//2
+        bool b_val;//3
+        string str_val;//4
+        //----------决定变量类型！！！！！！
+        char val_type_flag;//'i' 'c' 'b' 's' or 1 2 3 4
+        //VAR
         string var_name;//变量名
 
     //------------方法

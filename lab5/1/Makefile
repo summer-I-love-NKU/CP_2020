@@ -24,8 +24,9 @@ main: src/pch.h.gch
 
 run: lex yacc main test
 
+
 clean:
-	rm -f src/*.output src/main.l.yy.cpp src/main.tab.cpp src/main.tab.h src/main.output src/pch.h.gch $(TARGET) *.o ./bin/* 
+	rm -f src/*.output src/main.l.yy.cpp src/main.tab.cpp src/main.tab.h src/main.output src/pch.h.gch $(TARGET) *.o 
 
 test: 
 	./bin/main <./tests/test.c  >./tests/result.txt

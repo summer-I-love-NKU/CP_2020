@@ -3,7 +3,6 @@
 #include "pch.h"
 using namespace std;
 
-
 enum ValueType
 {
     VALUE_BOOL,
@@ -11,9 +10,11 @@ enum ValueType
     VALUE_CHAR,
     VALUE_STRING,
     VALUE_VOID,
-    COMPOSE_STRUCT,//struct,似乎困难起来了
-    COMPOSE_UNION,//union
-    COMPOSE_FUNCTION//function
+    VALUE_CONST_INT,//??可以吗？？
+    VALUE_CONST_CHAR,
+    COMPOSE_STRUCT,  //struct,似乎困难起来了
+    COMPOSE_UNION,   //union
+    COMPOSE_FUNCTION //function
 };
 
 class Type
@@ -46,7 +47,8 @@ static Type* TYPE_CHAR = new Type(VALUE_CHAR);
 static Type* TYPE_BOOL = new Type(VALUE_BOOL);
 static Type* TYPE_STRING = new Type(VALUE_STRING);
 static Type* TYPE_VOID = new Type(VALUE_VOID);
-
+static Type* TYPE_CONST_INT = new Type(VALUE_CONST_INT);
+static Type* TYPE_CONST_CHAR = new Type(VALUE_CONST_CHAR);
 int getSize(Type* type);
 
 #endif

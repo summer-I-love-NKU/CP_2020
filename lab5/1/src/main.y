@@ -14,7 +14,7 @@ stack<map<string,pair<string,int> > > ST_stack;
 stack<int> NUM_stack;
 map<string,pair<string,int> > t_top;
 int n_top;
-string ValType_name[10] = {"bool", "int", "char", "string","void","6"};
+string ValType_name[10] = {"bool", "int", "char", "string","void","const int","const char","8"};
 // //-------------
 %}
 
@@ -22,7 +22,7 @@ string ValType_name[10] = {"bool", "int", "char", "string","void","6"};
 // %start program//???开始符号？是不是可以默认？之前实验似乎没定义
 
     //声明or定义or变量等等的类型：int char bool void
-    %token T_INT T_CHAR T_BOOL T_VOID
+    %token T_INT T_CHAR T_BOOL T_VOID CONST
     //赋值 = += -= *= /= 
     %token ASSIGN ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN
     // 比较 == != >= > <= <
@@ -35,8 +35,8 @@ string ValType_name[10] = {"bool", "int", "char", "string","void","6"};
     %token ADD SUB MUL DIV MOD SELF_ADD SELF_SUB
     // ; ,  .  (){}
     %token SEMICOLON COMMA DOT LPAREN RPAREN LBRACE RBRACE
-    //ID  integer char bool string 字符 数字 标识符 字符串 等等
-    %token IDENTIFIER INTEGER CHAR BOOL STRING
+    //ID  integer(16 10 8 2) char bool string 字符 数字 标识符 字符串 等等
+    %token IDENTIFIER INTEGER_H INTEGER_D INTEGER_O INTEGER_B CHAR BOOL STRING
     // 关键字 main return for  printf  scanf  while  if else "else if"
     %token MAIN RETURN FOR WHILE IF ELSE ELSE_IF PRINTF SCANF
 
@@ -179,7 +179,7 @@ expr:
     IDENTIFIER {
         $$ = $1;
     }
-    | INTEGER {
+    | INT_CONST {
         //注意这部分的int char bool类型常量在词法分析的.l文件就已经定义初始化树结点了！！！
         $$ = $1;
     }
@@ -198,12 +198,14 @@ expr:
         // $$->int_val=$1->int_val+$3->int_val;
         $$->addChild($1);
         $$->addChild($3);
+        $$->val_type_flag=$1->val_type_flag;//??----------
         }
     | expr SUB expr {
         $$ = new TreeNode(lineno, NODE_EXPR); $$->op_type = OP_SUB;
         // $$->int_val=$1->int_val-$3->int_val;
         $$->addChild($1);
         $$->addChild($3);
+        $$->val_type_flag=$1->val_type_flag;//??----------
         }
     | expr MUL expr {
         $$ = new TreeNode(lineno, NODE_EXPR); $$->op_type = OP_MUL;
@@ -216,17 +218,20 @@ expr:
         // $$->int_val=$1->int_val/$3->int_val;
         $$->addChild($1);
         $$->addChild($3);
+        $$->val_type_flag=$1->val_type_flag;//??----------
         }
     | expr MOD expr {
         $$ = new TreeNode(lineno, NODE_EXPR); $$->op_type = OP_MOD;
         // $$->int_val=$1->int_val%$3->int_val;
         $$->addChild($1);
         $$->addChild($3);
+        $$->val_type_flag=$1->val_type_flag;//??----------
         }
     |SUB expr %prec UMINUS {
         $$ = new TreeNode(lineno, NODE_EXPR); $$->op_type = OP_NEG;
         // $$->int_val=-$2->int_val;
         $$->addChild($2);
+        $$->val_type_flag=$1->val_type_flag;//??----------
     }
 
     | expr AND expr{
@@ -234,53 +239,62 @@ expr:
         // $$->int_val=$1->int_val&&$3->int_val;
         $$->addChild($1);
         $$->addChild($3);
+        $$->val_type_flag='b';//??----------
     }
     | expr OR expr{
         $$ = new TreeNode(lineno, NODE_EXPR); $$->op_type = OP_OR;
         // $$->int_val=$1->int_val||$3->int_val;
         $$->addChild($1);
         $$->addChild($3);
+        $$->val_type_flag='b';//??----------
     }
     | NOT expr{
         $$ = new TreeNode(lineno, NODE_EXPR); $$->op_type = OP_NOT;
         // $$->int_val=!$2->int_val;
         $$->addChild($2);
+        $$->val_type_flag='b';//??----------
     }
     | expr LESS_EQ expr {
         $$ = new TreeNode(lineno, NODE_EXPR); $$->op_type = OP_LESS_EQ;
         // $$->int_val=($1->int_val<=$3->int_val);
         $$->addChild($1);
         $$->addChild($3);
+        $$->val_type_flag='b';//??----------
     }
     | expr LESS_THAN expr {
         $$ = new TreeNode(lineno, NODE_EXPR); $$->op_type = OP_LESS_THAN;
         // $$->int_val=($1->int_val<$3->int_val);
         $$->addChild($1);
         $$->addChild($3);
+        $$->val_type_flag='b';//??----------
     }
     | expr MORE_EQ expr {
         $$ = new TreeNode(lineno, NODE_EXPR); $$->op_type = OP_MORE_EQ;
         // $$->int_val=($1->int_val>=$3->int_val);
         $$->addChild($1);
         $$->addChild($3);
+        $$->val_type_flag='b';//??----------
     }
     | expr MORE_THAN expr {
         $$ = new TreeNode(lineno, NODE_EXPR); $$->op_type = OP_MORE_THAN;
         // $$->int_val=($1->int_val>$3->int_val);
         $$->addChild($1);
         $$->addChild($3);
+        $$->val_type_flag='b';//??----------
     }
     | expr NOT_EQ expr {
         $$ = new TreeNode(lineno, NODE_EXPR); $$->op_type = OP_NOT_EQ;
         // $$->int_val=($1->int_val!=$3->int_val);
         $$->addChild($1);
         $$->addChild($3);
+        $$->val_type_flag='b';//??----------
     }
     | expr EQ expr {
         $$ = new TreeNode(lineno, NODE_EXPR); $$->op_type = OP_EQ;
         // $$->int_val=($1->int_val==$3->int_val);
         $$->addChild($1);
         $$->addChild($3);
+        $$->val_type_flag='b';//??----------
     }
     ;
 decl_stmt: 
@@ -290,6 +304,18 @@ decl_stmt:
         $$->stmt_type = STMT_DECL;
         $$->addChild($1);
         $1->addChild($2);
+        //-------类型转换？？？char m=97;-->'a' -----
+            if(ValType_name[$1->type->type]=="char"&&$4->val_type_flag=='i')
+            {
+                $4->ch_val=char($4->int_val);
+                $4->val_type_flag='c';
+            }
+            if(ValType_name[$1->type->type]=="bool"&&$4->val_type_flag!='b')
+            {
+                $4->b_val=bool($4->int_val)||bool($4->ch_val);
+                $4->val_type_flag='b';
+            }
+        //-----------
         $2->addChild($4); 
         //----------------
         if(t_top.count($2->var_name)==0)
@@ -342,6 +368,18 @@ decl_stmt:
         $$ = $1;
         $$->child->addChild($3);
         $3->addChild($5);
+        //-------类型转换？？？char m=97;-->'a' -----
+            if(ValType_name[$$->child->type->type]=="char"&&$5->val_type_flag=='i')
+            {
+                $5->ch_val=char($5->int_val);
+                $5->val_type_flag='c';
+            }
+            if(ValType_name[$$->child->type->type]=="bool"&&$5->val_type_flag!='b')
+            {
+                $5->b_val=bool($5->int_val)||bool($5->ch_val);//无法转换字符串，看看规则？？？？
+                $5->val_type_flag='b';
+            }
+        //-------------------------
         //--------------------------
         if(t_top.count($3->var_name)==0)
         {
@@ -481,6 +519,16 @@ Type:
     | T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CHAR;}
     | T_BOOL {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_BOOL;}
     | T_VOID {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_VOID;}
+    | CONST T_INT {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CONST_INT;}
+    | CONST T_CHAR {$$ = new TreeNode(lineno, NODE_TYPE); $$->type = TYPE_CONST_CHAR;}
+    ;
+
+
+INT_CONST:
+    INTEGER_H {$$=$1;}
+    | INTEGER_D {$$=$1;}
+    | INTEGER_O {$$=$1;}
+    | INTEGER_B {$$=$1;}
     ;
 
 

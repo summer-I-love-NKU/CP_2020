@@ -57,7 +57,11 @@ BLOCK_COMMENT_ELEMENT_loose .
 
 BOOL true|false
 IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
-INTEGER [0-9]+
+INTEGER_H (0x|0X)([1-9a-fA-F][0-9a-fA-F]*|0)
+INTEGER_D [1-9][0-9]*|0
+INTEGER_O 0([1-7][0-7]*|0)
+INTEGER_B (0B|0b)(1|0)+
+
 CHAR \'.?\'
 STRING \".+\"
 
@@ -84,6 +88,7 @@ STRING \".+\"
 "bool" return T_BOOL;
 "char" return T_CHAR;
 "void" return T_VOID;
+"const" return CONST;
 
 "main" return MAIN;
 "return" return RETURN;
@@ -142,6 +147,7 @@ STRING \".+\"
         node->b_val = false;
     else
         node->b_val = true;
+    node->val_type_flag='b';
     yylval = node;
     return BOOL;
 }
@@ -152,21 +158,49 @@ STRING \".+\"
     yylval = node;
     return IDENTIFIER;
 }
+{INTEGER_H} {
+    //stoi（字符串，起始位置，n进制），将 n 进制的字符串转化为十进制
+    TreeNode* node = new TreeNode(lineno, NODE_CONST);
+    node->type = TYPE_INT;
+    node->int_val = stoi(string(yytext).substr(2,string(yytext).length()),0,16);
+    node->val_type_flag='i';
+    yylval = node;
+    return INTEGER_H;
 
-{INTEGER} {
+}
+{INTEGER_D} {
     //注意这里的 TYPE_INT 是一个对象！！！
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->type = TYPE_INT;
     node->int_val = atoi(yytext);
+    node->val_type_flag='i';
     yylval = node;
-    return INTEGER;
+    return INTEGER_D;
+}
+{INTEGER_O} {
+    TreeNode* node = new TreeNode(lineno, NODE_CONST);
+    node->type = TYPE_INT;
+    node->int_val = stoi(string(yytext).substr(1,string(yytext).length()),0,8);
+    node->val_type_flag='i';
+    yylval = node;
+    return INTEGER_H;
+
+}
+{INTEGER_B} {
+    TreeNode* node = new TreeNode(lineno, NODE_CONST);
+    node->type = TYPE_INT;
+    node->int_val = stoi(string(yytext).substr(2,string(yytext).length()),0,2);
+    node->val_type_flag='i';
+    yylval = node;
+    return INTEGER_H;
+
 }
 
 {CHAR} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->type = TYPE_CHAR;
     node->ch_val = yytext[1];//?????
-
+    node->val_type_flag='c';
     yylval = node;
     return CHAR;
 }
@@ -175,7 +209,7 @@ STRING \".+\"
     TreeNode *node = new TreeNode(lineno,NODE_CONST);
     node->type = TYPE_STRING;
     node->str_val = yytext;
-
+    node->val_type_flag='s';
     yylval = node;
     return STRING;
 

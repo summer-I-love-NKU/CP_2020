@@ -18,7 +18,7 @@
 string NODETYPE_name[10] = {"const","var","expr","type","stmt","program","7"};
 string StmtType_name[20] = {"block","skip", "decl","assign","add_assign","sub_assign","mul_assign","div_assign",
 "self_add_assign","self_sub_assign","printf","scanf","if","if else","while","for","17"};
-string ValueType_name[10] = {"bool", "int", "char", "string","void","6"};
+string ValueType_name[10] = {"bool", "int", "char", "string","void","const int","const char","8"};
 string OperatorType_name[20] = {"==","+","-","*","/","%","0-","&&","||","!","<=","<",">=",">","!=","16"};
 
 int the_nodeID = 0, new0_nodeID = 0, new_nodeID = 0; //根结点
@@ -80,49 +80,49 @@ void TreeNode::printNodeInfo()
 
     switch (this->nodeType)
     {
-    // cout.setf(std::ios::right);//输出右对齐
     case NODE_STMT:
         cout << std::right<<setw(setw1)<< "stmt_type: " << std::left<<setw(setw2)<<StmtType_name[this->stmt_type];
-        // cout<<setw(setw1+setw2)<<" ";
+        // cout<<setw(setw1+setw2)<<" ";//--------
         break;
     case NODE_CONST:
+        //---------注意如果有类型转换：  3 |  node@4   const  const_type: int   const_value: a 
         cout << std::right<<setw(setw1)<< "const_type: " << std::left<<setw(setw2)<<ValueType_name[this->type->type];
-        // cout << std::right<<setw(setw1)<< "const_value: ";
-        // switch (this->type->type)
-        // {
-        // case VALUE_BOOL:
-        //     cout << this->b_val;
-        //     break;
-        // case VALUE_INT:
-        //     cout << this->int_val;
-        //     break;
-        // case VALUE_CHAR:
-        //     cout << this->ch_val;
-        //     break;
-        // case VALUE_STRING:
-        //     cout << this->str_val;
-        //     break;
-        // default:
-        //     cout << "error!!!";
-        //     break;
-        // }
-        // cout << "  ";
+        cout << std::right<<setw(setw1)<< "const_value: ";//------------
+        switch (this->val_type_flag)
+        {
+        case 'b':
+            cout << this->b_val;
+            break;
+        case 'i':
+            cout << this->int_val;
+            break;
+        case 'c':
+            cout << this->ch_val;
+            break;
+        case 's':
+            cout << this->str_val;
+            break;
+        default:
+            cout << "error!!!";
+            break;
+        }
+        cout << "  ";
         break;
     case NODE_VAR:
         cout << std::right<<setw(setw1)<< "var_name: " << std::left<<setw(setw2)<<this->var_name;
-        // cout << std::right << setw(setw1) << "var_value: " << std::left<<setw(setw2) << this->int_val;
+        // cout << std::right << setw(setw1) << "var_value: "<< std::left<<setw(setw2) << this->int_val;//------------
         break;
     case NODE_TYPE:
         cout << std::right<<setw(setw1)<< "type: " << std::left<<setw(setw2)<<ValueType_name[this->type->type];
-        // cout<<setw(setw1+setw2)<<" ";
+        // cout<<setw(setw1+setw2)<<" ";//-----------
         break;
     case NODE_EXPR:
         cout << std::right<<setw(setw1)<< "expr_type: " << std::left<<setw(setw2)<<OperatorType_name[this->op_type];
-        // cout << std::right<<setw(setw1)<< "expr_value: "<<std::left<<setw(setw2)<< this->int_val;
+        // cout << std::right<<setw(setw1)<< "expr_value: "<<std::left<<setw(setw2)<< this->int_val;//------
         break;
     case NODE_PROG:
         cout<<setw(setw1+setw2)<<" ";
-        // cout<<setw(setw1+setw2)<<" ";//setw1+setw2 只有root走这里吧
+        // cout<<setw(setw1+setw2)<<" ";//setw1+setw2 只有root走这里吧//---------
         break;
     default:
         cout<<"error!!!";//
