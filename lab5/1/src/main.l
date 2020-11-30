@@ -1,6 +1,7 @@
 %option nounput
 %{
 #include "common.h"
+
 #include "main.tab.h"  // yacc header，这里是不是就将flex和yacc联系起来了
 
 int lineno=1;
@@ -30,6 +31,11 @@ node->ch_val = yytext[1];???
 
 一定注意，最长前缀原则————先识别： ==  而不是 = ， ！= 而不是！，++而不是+，。。。
 
+
+符号表的实现！！！！
+
+一个作用域的——开始符号，结束符号：{ }
+
 */
 
 %}
@@ -40,13 +46,13 @@ node->ch_val = yytext[1];???
 
 EOL	(\r\n|\r|\n)
 WHILTESPACE [[:blank:]]
-SEMICOLON ;
-
 
 LINECOMMENT \/\/[^\n]*
 COM_BEGIN  \/\*
 COM_END  \*\/
 BLOCK_COMMENT_ELEMENT_loose .
+
+
 
 
 BOOL true|false
@@ -55,18 +61,14 @@ INTEGER [0-9]+
 CHAR \'.?\'
 STRING \".+\"
 
-ADD_ASSIGN \+=
-SUB_ASSIGN \-=
-MUL_ASSIGN \*=
-DIV_ASSIGN \/=
-SELF_ADD \+\+
-SELF_SUB \-\-
+
 %%
 
 {EOL} lineno++;
 {WHILTESPACE} /* do nothing */
-{SEMICOLON} return  SEMICOLON;
-
+";" return  SEMICOLON;
+"," return COMMA;
+"." return DOT;
 
 
 {LINECOMMENT}  {BEGIN LINE_COMMENT;}
@@ -81,11 +83,16 @@ SELF_SUB \-\-
 "int" return T_INT;
 "bool" return T_BOOL;
 "char" return T_CHAR;
+"void" return T_VOID;
 
+"main" return MAIN;
+"return" return RETURN;
 
+"for" return FOR;
 "if" return IF;
 "while" return WHILE;
 "else" return ELSE;
+"else if" return ELSE_IF;
 
 "printf" return PRINTF;
 "scanf" return SCANF;
@@ -95,12 +102,12 @@ SELF_SUB \-\-
 "==" return EQ;
 "=" return ASSIGN;
 
-{SELF_ADD} return SELF_ADD;
-{SELF_SUB} return SELF_SUB;
-{ADD_ASSIGN} return ADD_ASSIGN;
-{SUB_ASSIGN} return SUB_ASSIGN;
-{MUL_ASSIGN} return MUL_ASSIGN;
-{DIV_ASSIGN} return DIV_ASSIGN;
+"++" return SELF_ADD;
+"--" return SELF_SUB;
+"+=" return ADD_ASSIGN;
+"-=" return SUB_ASSIGN;
+"*=" return MUL_ASSIGN;
+"/=" return DIV_ASSIGN;
 
 "+" return ADD;
 "-" return SUB;
@@ -121,6 +128,10 @@ SELF_SUB \-\-
 "&&" return AND;
 "||" return OR;
 
+"&" return b_AND;
+"|" return b_OR;
+"~" return b_NOT;
+"^" return b_NOR;
 
 {BOOL} {
     //这里是yytex是字符串类型，不能直接赋值给bool是吗？？？

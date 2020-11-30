@@ -28,8 +28,8 @@ enum OperatorType//---------运算类型
     OP_SUB,
     OP_MUL,
     OP_DIV,
-    OP_SELF_ADD,
-    OP_SELF_SUB,
+    // OP_SELF_ADD,
+    // OP_SELF_SUB,
     OP_MOD,
     OP_NEG,
     OP_AND,
@@ -52,11 +52,14 @@ enum StmtType {//------------语句类型
     STMT_SUB_ASSIGN,
     STMT_MUL_ASSIGN,
     STMT_DIV_ASSIGN,
+    STMT_SELF_ADD_ASSIGN,
+    STMT_SELF_SUB_ASSIGN,
     STMT_PRINTF,
     STMT_SCANF,
     STMT_IF,
     STMT_IF_ELSE,
     STMT_WHILE,
+    STMT_FOR,
 }
 ;
 

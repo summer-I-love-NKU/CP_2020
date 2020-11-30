@@ -1,0 +1,3 @@
+b8ad42b HEAD@{0}: commit: 周日下午，继续加油啊冲！！！完成符号表和指针等等！！！
+972f0d6 HEAD@{1}: commit: 好难啊莫名其妙就好了，明天努力做高级别功能！！！
+04a8ca4 HEAD@{2}: commit (initial): test

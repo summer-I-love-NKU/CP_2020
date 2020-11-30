@@ -1,6 +1,6 @@
-#ifndef TYPESYSTEM_H
-#define TYPESYSTEM_H
-#include "./pch.h"
+#ifndef TYPE_H
+#define TYPE_H
+#include "pch.h"
 using namespace std;
 
 
@@ -10,6 +10,7 @@ enum ValueType
     VALUE_INT,
     VALUE_CHAR,
     VALUE_STRING,
+    VALUE_VOID,
     COMPOSE_STRUCT,//struct,似乎困难起来了
     COMPOSE_UNION,//union
     COMPOSE_FUNCTION//function
@@ -34,6 +35,7 @@ public:
 public:
     ValueType* sibling; 
 public:
+//我没用这个函数
     string getTypeInfo();
 };
 
@@ -43,6 +45,7 @@ static Type* TYPE_INT = new Type(VALUE_INT);
 static Type* TYPE_CHAR = new Type(VALUE_CHAR);
 static Type* TYPE_BOOL = new Type(VALUE_BOOL);
 static Type* TYPE_STRING = new Type(VALUE_STRING);
+static Type* TYPE_VOID = new Type(VALUE_VOID);
 
 int getSize(Type* type);
 

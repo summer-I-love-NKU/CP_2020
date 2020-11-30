@@ -14,11 +14,12 @@
 
  
  * */
+//-------------
 string NODETYPE_name[10] = {"const","var","expr","type","stmt","program","7"};
-string StmtType_name[20] = {"block","skip", "decl","assign","add_assign","sub_assign","mul_assign",
-"div_assign","printf","scanf","if","if else","while","14"};
-string ValueType_name[5] = {"bool", "int", "char", "string","5"};
-string OperatorType_name[20] = {"==","+","-","*","/","++","--","%","0-","&&","||","!","<=","<",">=",">","!=","18"};
+string StmtType_name[20] = {"block","skip", "decl","assign","add_assign","sub_assign","mul_assign","div_assign",
+"self_add_assign","self_sub_assign","printf","scanf","if","if else","while","for","17"};
+string ValueType_name[10] = {"bool", "int", "char", "string","void","6"};
+string OperatorType_name[20] = {"==","+","-","*","/","%","0-","&&","||","!","<=","<",">=",">","!=","16"};
 
 int the_nodeID = 0, new0_nodeID = 0, new_nodeID = 0; //根结点
 int TreeNode::node_num = 0;

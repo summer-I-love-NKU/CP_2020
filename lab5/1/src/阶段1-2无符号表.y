@@ -10,11 +10,11 @@ extern int lineno;
 int yylex();
 int yyerror( char const * );
 // //------------
-stack<map<string,pair<string,int> > > ST_stack;
-stack<int> NUM_stack;
-map<string,pair<string,int> > t_top;
-int n_top;
-string ValType_name[10] = {"bool", "int", "char", "string","void","6"};
+// stack<map<string,pair<string,int> > > ST_stack;
+// stack<int> NUM_stack;
+// map<string,pair<string,int> > t_top;
+// int n_top;
+// string ValType_name[10] = {"bool", "int", "char", "string","void","6"};
 // //-------------
 %}
 
@@ -92,26 +92,12 @@ string ValType_name[10] = {"bool", "int", "char", "string","void","6"};
 %%
 
 program: 
-    Type MAIN LPAREN RPAREN LBRACE fake_1 statements RBRACE {
+    Type MAIN LPAREN RPAREN LBRACE fake_name_1 statements RBRACE {
         root = new TreeNode($1->lineno, NODE_PROG); root->addChild($7);
-        //-------------------
-        cout<<"------主函数符号表！！！------\n";
-        for(map<string,pair<string,int> >::iterator iter = t_top.begin(); iter != t_top.end(); iter++)
-        {
-            cout<<iter->first<<":"<<iter->second.first<<"  "<<iter->second.second<<endl;
-        }cout<<"------------\n";
-        cout<<"}"<<endl;
-        //------------------
         }
     ;
-fake_1:{
-        //---------------
-        cout<<"{"<<endl;
-        map<string,pair<string,int> > tmp;int numtmp=1;
-        ST_stack.push(tmp);NUM_stack.push(numtmp);
-        t_top=ST_stack.top();n_top=NUM_stack.top();
-        //-------------------
-    };
+fake_name_1:
+{cout<<"{"<<"!!!!!!"<<endl;};
 
 statements:
     statement {
@@ -131,48 +117,13 @@ statement:
     | assign_stmt SEMICOLON {$$=$1;}
     | IO_stmt SEMICOLON {$$=$1;}
     | if_else_while_for_stmt {$$=$1;}
-    | LBRACE fake_2 statements RBRACE {
+    | LBRACE statements RBRACE {
         //语句加一个总的根结点，解决问题
-        $$ = new TreeNode($3->lineno, NODE_STMT);
+        $$ = new TreeNode($2->lineno, NODE_STMT);
         $$->stmt_type=STMT_BLOCK;
-        $$->addChild($3);
-        //-------------------------------------
-            cout<<"------------\n";
-            cout<<"显示啊！！！"<<endl;
-            for(map<string,pair<string,int> >::iterator iter = t_top.begin(); iter != t_top.end(); iter++)
-            {
-                cout<<iter->first<<":"<<iter->second.first<<"  "<<iter->second.second<<endl;
-            }cout<<"------------\n";
-            
-            if(ST_stack.size()>1)
-            {
-                ST_stack.pop();t_top=ST_stack.top();
-                // cout<<"弹栈后！！！"<<endl;cout<<"stack size"<<ST_stack.size()<<endl<<"stack empty:"<<ST_stack.empty()
-                // <<endl<<"map empty:"<<t_top.empty()<<endl;
-                    // for(map<string,pair<string,int> >::iterator iter = t_top.begin(); iter != t_top.end(); iter++)
-                    // {
-                    //     cout<<iter->first<<":"<<iter->second.first<<"  "<<iter->second.second<<endl;
-                    // }
-            }
-            if(NUM_stack.size()>1)
-            {
-                NUM_stack.pop();
-                n_top=NUM_stack.top();
-            }
-        //-------------------------
+        $$->addChild($2);
         }
     ;
-fake_2:{
-        //-------------------------
-        //===================更新!!!
-        ST_stack.pop();ST_stack.push(t_top);
-
-        //===============再压栈下一级作用域符号表
-        map<string,pair<string,int> > tmp;int numtmp=1;
-        ST_stack.push(tmp);NUM_stack.push(numtmp);
-        t_top=ST_stack.top();n_top=NUM_stack.top();
-        //----------------------------
-    };
 
 
 expr: 
@@ -291,68 +242,21 @@ decl_stmt:
         $$->addChild($1);
         $1->addChild($2);
         $2->addChild($4); 
-        //----------------
-        if(t_top.count($2->var_name)==0)
-        {
-            t_top[$2->var_name]=make_pair(ValType_name[$1->type->type],n_top);
-            n_top++;
-        }
-        else
-        {
-            cout<<"redefine error!!!"<<endl;
-        }
-        //-------------
     } 
     | Type IDENTIFIER {
         $$ = new TreeNode($1->lineno, NODE_STMT);
         $$->stmt_type = STMT_DECL;
         $$->addChild($1);
         $1->addChild($2);
-        //--------------------------
-        if(t_top.count($2->var_name)==0)
-        {
-            t_top[$2->var_name]=make_pair(ValType_name[$1->type->type],n_top);
-            // cout<<"!!!!"<<$2->var_name<<"  "<< ValType_name[$1->type->type]<<" "<<n_top<<endl;
-            // cout<<"当前map中元素个数："<<t_top.size()<<endl;
-            n_top++;
-        }
-        else
-        {
-            cout<<"redeclare error!!!"<<endl;
-
-        }
-        //-----------------------
     }
     | decl_stmt COMMA IDENTIFIER{
         $$ = $1;
         $$->child->addChild($3);
-        //--------------------------
-        if(t_top.count($3->var_name)==0)
-        {
-            t_top[$3->var_name]=make_pair(ValType_name[$1->child->type->type],n_top);
-            n_top++;
-        }
-        else
-        {
-            cout<<"redeclare error!!!"<<endl;
-        }
-        //-----------------------
     }
     | decl_stmt COMMA IDENTIFIER ASSIGN expr{
         $$ = $1;
         $$->child->addChild($3);
         $3->addChild($5);
-        //--------------------------
-        if(t_top.count($3->var_name)==0)
-        {
-            t_top[$3->var_name]=make_pair(ValType_name[$1->child->type->type],n_top);
-            n_top++;
-        }
-        else
-        {
-            cout<<"redefine error!!!"<<endl;
-        }
-        //-----------------------
     }
     ;
 
