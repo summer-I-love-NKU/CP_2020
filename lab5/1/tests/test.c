@@ -1,7 +1,9 @@
 int main()
 {
-    char a = 97;
-    int b = 12;
-    bool c = 12;
-
+    int a[1];
+    int b[2][3];
+    int *p;
+    int *p = &c;
+    int a = 1;
+    
 }

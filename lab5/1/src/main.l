@@ -58,7 +58,7 @@ BLOCK_COMMENT_ELEMENT_loose .
 BOOL true|false
 IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 INTEGER_H (0x|0X)([1-9a-fA-F][0-9a-fA-F]*|0)
-INTEGER_D [1-9][0-9]*|0
+INTEGER_DPN ("-"?)([1-9][0-9]*|0)
 INTEGER_O 0([1-7][0-7]*|0)
 INTEGER_B (0B|0b)(1|0)+
 
@@ -114,6 +114,26 @@ STRING \".+\"
 "*=" return MUL_ASSIGN;
 "/=" return DIV_ASSIGN;
 
+{INTEGER_DPN} {
+    //注意这里的 TYPE_INT 是一个对象！！！
+    TreeNode* node = new TreeNode(lineno, NODE_CONST);
+    node->type = TYPE_INT;
+    node->val_type_flag='i';
+    if(yytext[0]=='-')
+    {
+        node->int_val = -stoi(string(yytext).substr(1,string(yytext).length()),0,10);
+        yylval = node;
+        return INTEGER_DN;
+    }
+    else
+    {
+        node->int_val = atoi(yytext);
+        yylval = node;
+        return INTEGER_DP;
+    } 
+}
+
+
 "+" return ADD;
 "-" return SUB;
 "*" return MUL;
@@ -129,7 +149,8 @@ STRING \".+\"
 ")" {return RPAREN;}
 "{" {return LBRACE;}
 "}" {return RBRACE;}
-
+"[" return LMPAREN;
+"]" return RMPAREN;
 "&&" return AND;
 "||" return OR;
 
@@ -168,15 +189,7 @@ STRING \".+\"
     return INTEGER_H;
 
 }
-{INTEGER_D} {
-    //注意这里的 TYPE_INT 是一个对象！！！
-    TreeNode* node = new TreeNode(lineno, NODE_CONST);
-    node->type = TYPE_INT;
-    node->int_val = atoi(yytext);
-    node->val_type_flag='i';
-    yylval = node;
-    return INTEGER_D;
-}
+
 {INTEGER_O} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->type = TYPE_INT;

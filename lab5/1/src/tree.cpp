@@ -15,9 +15,9 @@
  
  * */
 //-------------
-string NODETYPE_name[10] = {"const","var","expr","type","stmt","program","7"};
-string StmtType_name[20] = {"block","skip", "decl","assign","add_assign","sub_assign","mul_assign","div_assign",
-"self_add_assign","self_sub_assign","printf","scanf","if","if else","while","for","17"};
+string NODETYPE_name[10] = {"const","var","array","expr","type","stmt","program","8"};
+string StmtType_name[20] = {"block","skip", "decl var","decl ptr","decl ref","assign","add_assign","sub_assign","mul_assign","div_assign",
+"self_add_assign","self_sub_assign","printf","scanf","if","if else","while","for","19"};
 string ValueType_name[10] = {"bool", "int", "char", "string","void","const int","const char","8"};
 string OperatorType_name[20] = {"==","+","-","*","/","%","0-","&&","||","!","<=","<",">=",">","!=","16"};
 
@@ -111,6 +111,10 @@ void TreeNode::printNodeInfo()
     case NODE_VAR:
         cout << std::right<<setw(setw1)<< "var_name: " << std::left<<setw(setw2)<<this->var_name;
         // cout << std::right << setw(setw1) << "var_value: "<< std::left<<setw(setw2) << this->int_val;//------------
+        break;
+    case NODE_ARR:
+        cout << std::right<<setw(setw1)<< "array_name: " << std::left<<setw(setw2)<<this->var_name;
+        // cout<<setw(setw1+setw2)<<" ";//-----------
         break;
     case NODE_TYPE:
         cout << std::right<<setw(setw1)<< "type: " << std::left<<setw(setw2)<<ValueType_name[this->type->type];

@@ -14,6 +14,7 @@ enum NodeType//-------结点类型
 {
     NODE_CONST, //常量
     NODE_VAR,//变量
+    NODE_ARR,
     NODE_EXPR,//表达式
     NODE_TYPE,//类型
 
@@ -46,7 +47,9 @@ enum OperatorType//---------运算类型
 enum StmtType {//------------语句类型
     STMT_BLOCK,
     STMT_SKIP,
-    STMT_DECL,
+    STMT_DECL_V,
+    STMT_DECL_P,
+    STMT_DECL_R,
     STMT_ASSIGN,
     STMT_ADD_ASSIGN,
     STMT_SUB_ASSIGN,
@@ -87,10 +90,11 @@ public:
         char ch_val;//2
         bool b_val;//3
         string str_val;//4
+        int address;//5 pointer指针
         //----------决定变量类型！！！！！！
-        char val_type_flag;//'i' 'c' 'b' 's' or 1 2 3 4
+        char val_type_flag;//'i' 'c' 'b' 's' 'p'  or 1 2 3 4 5
         //VAR
-        string var_name;//变量名
+        string var_name;//变量名 or 数组名共用
 
     //------------方法
     //儿子和兄弟结点的操作
