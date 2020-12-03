@@ -29,8 +29,6 @@ enum OperatorType//---------运算类型
     OP_SUB,
     OP_MUL,
     OP_DIV,
-    // OP_SELF_ADD,
-    // OP_SELF_SUB,
     OP_MOD,
     OP_NEG,
     OP_AND,
@@ -47,9 +45,10 @@ enum OperatorType//---------运算类型
 enum StmtType {//------------语句类型
     STMT_BLOCK,
     STMT_SKIP,
-    STMT_DECL_V,
-    STMT_DECL_P,
-    STMT_DECL_R,
+    STMT_DECL_V,//var
+    STMT_DECL_P,//*p
+    STMT_DECL_R,//&
+    STMT_DECL_A,//a[1][2]
     STMT_ASSIGN,
     STMT_ADD_ASSIGN,
     STMT_SUB_ASSIGN,
@@ -92,46 +91,81 @@ public:
         string str_val;//4
         int address;//5 pointer指针
         //----------决定变量类型！！！！！！
-        char val_type_flag;//'i' 'c' 'b' 's' 'p'  or 1 2 3 4 5
+        char val_type_flag;//'i' 'c' 'b' 's' 'p'  
         //VAR
         string var_name;//变量名 or 数组名共用
+        // int arr_d[4];// 数组维度？
 
-    //------------方法
-    //儿子和兄弟结点的操作
-    //
-    TreeNode* child = nullptr;
-    TreeNode* sibling = nullptr;
+        //------------方法
+        //儿子和兄弟结点的操作
+        //
+        TreeNode *child = nullptr;
+        TreeNode *sibling = nullptr;
 
-    void addChild(TreeNode*);
-    void addSibling(TreeNode*);
-    
-    //显示信息
-    void printNodeInfo();
-    void printChildrenId();
-    // void printSpecialInfo();
+        void addChild(TreeNode *);
+        void addSibling(TreeNode *);
 
-    //生成结点序号，为了显示美观，所以一开始不需要结点序号？？
-    //--------注意这两个函数，只给root用！！！不然你也不知道怎么写
-    void genNodeId();
-    void printAST(); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。
+        //显示信息
+        void printNodeInfo();
+        void printChildrenId();
+        // void printSpecialInfo();
 
+        //生成结点序号，为了显示美观，所以一开始不需要结点序号？？
+        //--------注意这两个函数，只给root用！！！不然你也不知道怎么写
+        void genNodeId();
+        void printAST(); // 先输出自己 + 孩子们的id；再依次让每个孩子输出AST。
 
-    //这个我自己用数组实现了！！！
-    // //public:
-    //     static string nodeType2String (NodeType type);
-    //     static string opType2String (OperatorType type);
-    //     static string sType2String (StmtType type);
+        //这个我自己用数组实现了！！！
+        // //public:
+        //     static string nodeType2String (NodeType type);
+        //     static string opType2String (OperatorType type);
+        //     static string sType2String (StmtType type);
 
-public:
-//这个构造函数？？？！！！new是什么意思
-//TreeNode* node = new TreeNode(lineno, NODE_CONST);
-    TreeNode(int lineno, NodeType type);
+    public:
+        //这个构造函数？？？！！！new是什么意思
+        //TreeNode* node = new TreeNode(lineno, NODE_CONST);
+        TreeNode(int lineno, NodeType type);
 
-    static int node_num;
-    int total_node_num();
+        static int node_num;
+        int total_node_num();
 };
 
 
+struct SymTable
+{ 
+public:
+    SymTable(int scopeid);
+    int scope;//作用域级别
+    // string name;
+    // string type; //or char type//int char bool string? pointer reference
+    // char flag;//var  const  pointer  struct  function
+    // int d[5];//数组维数
+    map<string,pair<string,int> > tmap;
+    SymTable *father;
+    //----
+};
+
+// struct Param
+// {
+// public:
+//     string type; //参数类型
+//     string name; //参数名
+//     Param *next;
+// };
+ 
+
+// struct Function
+// {
+
+// public:
+//     string name; //函数名
+//     string type; //返回值类型
+//     Param para; //参数列表
+//     // long scope; //标识符作用域信息
+//     // long memloc; //函数入口的地址
+//     // Function * next; //异名链表指针
+
+// };
 
 
 #endif

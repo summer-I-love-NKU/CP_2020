@@ -14,12 +14,19 @@
 
  
  * */
+
+
+
+SymTable::SymTable(int scopeid)
+{
+    this->scope = scopeid;
+}
 //-------------
-string NODETYPE_name[10] = {"const","var","array","expr","type","stmt","program","8"};
-string StmtType_name[20] = {"block","skip", "decl var","decl ptr","decl ref","assign","add_assign","sub_assign","mul_assign","div_assign",
-"self_add_assign","self_sub_assign","printf","scanf","if","if else","while","for","19"};
-string ValueType_name[10] = {"bool", "int", "char", "string","void","const int","const char","8"};
-string OperatorType_name[20] = {"==","+","-","*","/","%","0-","&&","||","!","<=","<",">=",">","!=","16"};
+string NODETYPE_name[20] = {"const","var","array","expr","type","stmt","program","8"};
+string StmtType_name[30] = {"block","skip", "decl var","decl ptr","decl ref","decl array","assign","add_assign","sub_assign","mul_assign","div_assign",
+"self_add_assign","self_sub_assign","printf","scanf","if","if else","while","for","20"};
+string ValueType_name[20] = {"bool", "int", "char", "string","void","const int","const char","8"};
+string OperatorType_name[30] = {"==","+","-","*","/","%","0-","&&","||","!","<=","<",">=",">","!=","16"};
 
 int the_nodeID = 0, new0_nodeID = 0, new_nodeID = 0; //根结点
 int TreeNode::node_num = 0;
@@ -74,9 +81,9 @@ TreeNode::TreeNode(int lineno, NodeType type)
 
 void TreeNode::printNodeInfo() 
 {
-    int setw1 = 15, setw2 = 10;
+    int setw1 = 15, setw2 = 15;
     cout << std::left << setw(2) << this->lineno << "|  "
-         << "node@" << std::left << setw(2) << this->nodeID << "  " << setw(7) << NODETYPE_name[this->nodeType] << "  ";
+         << "@" << std::left << setw(2) << this->nodeID << "  " << setw(7) << NODETYPE_name[this->nodeType] << "  ";
 
     switch (this->nodeType)
     {
