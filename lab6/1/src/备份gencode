@@ -1,0 +1,1227 @@
+void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
+{
+	//!!!注意e1  e2 的顺序，因为subl S,D：D=D-S
+	TreeNode *e1 = t->child;TreeNode *e2=nullptr;
+	if(t->op_type!=OP_NEG&&t->op_type!=OP_NOT)
+		e2 = t->child->sibling;
+	
+	
+	if(t->op_type==OP_ADD||t->op_type==OP_MUL)
+	{
+		if (e1->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e1);// 
+			//cout << "\tmovl\t%eax"<< ", %eax\n";//movl eax eax 
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<< ", %eax\n";
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<< ", %eax\n";
+		else
+			return;//error
+
+		
+		if (e2->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e2);
+			cout << "\tmovl\t%eax"<< ", %edx\n";
+		}
+		else if (e2->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e2->int_val<< ", %edx\n";
+		else if(e2->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e2->var_name<< ", %edx\n";
+		else 
+			return;
+
+		switch (t->op_type)
+		{
+			case OP_ADD:
+				cout<<"\taddl\t%edx, %eax\n";break;
+			case OP_MUL:
+				cout<<"\timull\t%edx, %eax\n";break;
+			default:
+				break;
+		}
+		
+	}
+	else if(t->op_type==OP_SUB)
+	{
+	/*******************************************************/
+		if (e1->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e1);// 
+			//cout << "\tmovl\t%eax"<< ", %eax\n";//movl eax eax  
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<< ", %eax\n";
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<< ", %eax\n";
+		else
+			return;//error
+	/*******************************************************/
+		if (e2->nodeType==NODE_EXPR)
+		{
+			expr_gen_code(e2);
+			cout << "\tmovl\t%eax"<< ", %edx\n";
+		}
+		else if (e2->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e2->int_val<< ", %edx\n";
+		else if(e2->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e2->var_name<< ", %edx\n";
+		else 
+			return;
+	/*******************************************************/
+		cout<<"\tsubl\t%edx, %eax\n";
+		/*********************************
+		 *	6*2-12: 
+		wrong:
+		 	movl	$12, %edx---顺序提前了 是 e1  e2的问题
+			movl	$6, %edx
+			movl	$2, %eax
+			imull	%edx, %eax
+			movl	%eax, %eax
+			subl	%edx, %eax
+		ok:
+			movl	$6, %eax
+			movl	$2, %edx
+			imull	%edx, %eax
+			movl	$12, %edx
+			movl	%eax, %eax# 此句优化掉了
+			subl	%edx, %eax
+			*/
+		
+	}
+	else if(t->op_type==OP_DIV||t->op_type==OP_MOD)
+	{
+		if (e1->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e1);//已经在eax
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<<", %eax\n"; 
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<<", %eax\n";
+		else
+			return;//error
+
+		
+		if (e2->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e2);
+		}
+		else if (e2->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e2->int_val<< ", %ecx\n";
+		else if(e2->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e2->var_name<<", %ecx\n";
+		else 
+			return;
+		cout<<"\tcltd\n"
+		<<"\tidivl\t%ecx\n";//res is in %eax
+		if(t->op_type==OP_MOD)
+			cout<<"\tmovl\t%edx, %eax\n";
+		//-------------div-----------
+		// movl	_ZL1a, %eax
+		// movl	_ZL1b, %ecx
+		// cltd
+		// idivl	%ecx
+		// movl	%eax, _ZL1c--eax存商， edx存余数
+		//---------------mod---------
+		// movl	_ZL1a, %eax
+		// movl	_ZL1b, %ecx
+		// cltd
+		// idivl	%ecx
+
+		// #movl	%edx, %eax
+		// #movl	%eax, _ZL1c----使得结果存在%eax!!
+		// movl	%edx, _ZL1c
+		//-----------------------------------------------
+		// idivl S
+		// R[%edx] = R[%edx]:R[%eax] % S;
+		// R[%eax] = R[%edx]:R[%eax] / S;
+		// 有符号除法，保存余数和商
+
+		//cltd S
+		// R[%edx]:R[%eax] = 符号位扩展R[%eax]
+		// 转换为4字节
+	}
+	else if(t->op_type==OP_NEG)//-a
+	{
+		if(e1->nodeType==NODE_CONST)
+		{
+			cout<<"\tmovl\t$-"<<e1->int_val<<", %eax\n";
+		}
+		else if(e1->nodeType==NODE_VAR)//################################可优化
+		{
+			cout<<"\tmovl\t"<<e1->var_name<<", %eax\n"
+			<<"\timull\t$-1, $eax\n";
+		}
+		else if(e1->nodeType==NODE_EXPR)
+		{
+			expr_gen_code(e1);
+			cout<<"\timull\t$-1, $eax\n";
+		}
+		else;
+	}
+	else if(t->op_type==OP_AND)
+	{	//-----------------e1--------------
+		if (e1->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e1);//已经在eax
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<<", %eax\n"; 
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<<", %eax\n";
+		else;
+
+		cout<<"\ttestl\t%eax, %eax\n"
+		<<"\tje\t.L"<<label_index<<"\n";// if 0 jmp L1
+
+		//-----------------e2-----------------------
+		if (e2->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e2);//已经在eax
+		}
+		else if (e2->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e2->int_val<<", %eax\n"; 
+		else if(e2->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e2->var_name<<", %eax\n";
+		else;
+		cout<<"\ttestl\t%eax, %eax\n"
+		<<"\tje\t.L"<<label_index<<"\n";//if 0 jmp L1
+
+		cout<<"\tmovl\t$1, %eax\n";//------------true  //jmp L2
+		cout<<"\tjmp\t.L"<<label_index+1<<"\n"
+		<<".L"<<label_index<<":\n";//-----------L1:false  
+		cout<<"\tmovl\t$0, %eax\n";
+
+		cout<<".L"<<label_index+1<<":\n";//L2
+
+		label_index+=2;
+	}
+	else if(t->op_type==OP_OR)
+	{	//-----------------e1--------------
+		if (e1->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e1);//已经在eax
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<<", %eax\n"; 
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<<", %eax\n";
+		else;
+
+		cout<<"\ttestl\t%eax, %eax\n"
+		<<"\tjne\t.L"<<label_index<<"\n";// if 1 jmp L1
+
+		//-----------------e2-----------------------
+		if (e2->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e2);//已经在eax
+		}
+		else if (e2->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e2->int_val<<", %eax\n"; 
+		else if(e2->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e2->var_name<<", %eax\n";
+		else;
+		cout<<"\ttestl\t%eax, %eax\n"
+		<<"\tjne\t.L"<<label_index<<"\n";//if 1 jmp L1
+
+		cout<<"\tmovl\t$0, %eax\n";//------------false  //jmp L2
+		cout<<"\tjmp\t.L"<<label_index+1<<"\n"
+		<<".L"<<label_index<<":\n";//-----------L1:true 
+		cout<<"\tmovl\t$1, %eax\n";
+
+		cout<<".L"<<label_index+1<<":\n";//L2
+		
+		label_index+=2;
+	}
+	else if(t->op_type==OP_NOT)
+	{	//-----------------e1--------------
+		if (e1->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e1);//已经在eax
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<<", %eax\n"; 
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<<", %eax\n";
+		else;
+
+		cout<<"\ttestl\t%eax, %eax\n"
+		<<"\tje\t.L"<<label_index<<"\n";// if 0 jmp L1 (!0 is true)
+
+		cout<<"\tmovl\t$0, %eax\n";//------------false  //jmp L2
+		cout<<"\tjmp\t.L"<<label_index+1<<"\n"
+		<<".L"<<label_index<<":\n";//-----------L1:true  
+		cout<<"\tmovl\t$1, %eax\n";
+
+		cout<<".L"<<label_index+1<<":\n";//L2
+		
+		label_index+=2;
+	}
+	else if(t->op_type>=OP_LESS_EQ&&t->op_type<=OP_NOT_EQ)
+	{
+		string a_op[20];
+		a_op[10]="jle";
+		a_op[11]="jl";
+		a_op[12]="jge";
+		a_op[13]="jg";
+		a_op[14]="je";
+		a_op[15]="jne";
+		//-----------------e1--------------
+		if (e1->nodeType==NODE_EXPR)
+		{
+			expr_gen_code(e1);//已经在eax
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<<", %eax\n"; 
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<<", %eax\n";
+		else;
+
+		//-----------------e2-----------------------
+		if (e2->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e2);//已经在eax
+		}
+		else if (e2->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e2->int_val<<", %ebx\n"; 
+		else if(e2->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e2->var_name<<", %ebx\n";
+		else;
+
+		cout<<"\tcmpl\t%ebx, %eax\n";//eax-ebx
+
+		if(t->op_type==OP_LESS_EQ)
+		cout<<"\t"<<a_op[t->op_type]<<"\t.L"<<label_index<<"\n";//if 1 jmp L1
+
+
+		cout<<"\tmovl\t$0, %eax\n";//------------false  //jmp L2
+		cout<<"\tjmp\t.L"<<label_index+1<<"\n"
+		<<".L"<<label_index<<":\n";//-----------L1:
+		cout<<"\tmovl\t$1, %eax\n";//------------true 
+
+		cout<<".L"<<label_index+1<<":\n";//L2
+		
+		label_index+=2;
+
+	}
+	else
+	;
+	
+}
+
+void TreeNode::stmt_gen_code(TreeNode *t)
+{
+	int t_type=t->stmt_type;
+
+	cout<<StmtType_name[t_type]<<"!!!!!!!!!!!!"<<endl;
+
+	TreeNode* p=t->child;//decl outside of switch!!!
+
+	if(t_type==STMT_BLOCK||t_type==STMT_RETURN)
+		;
+	else if(t_type==STMT_PRINTF)
+	{
+		if(p->sibling==nullptr)//printf("ss")
+		{
+			cout<<"\tsubl\t$12, %esp\n"
+			<<"\tpushl\t$.LC"<<strlist[p->str_val]<<endl
+			<<"\tcall\tprintf\n"
+			<<"\taddl\t$16, %esp\n"
+			<<endl;
+			// subl	$12, %esp
+			// pushl	$.LC1
+			// call	printf
+			// addl	$16, %esp
+		}	
+		else if(p->sibling->child->sibling==nullptr)//printf("%d",a)//注意第二个孩子是block
+		{
+			if(p->sibling->child->nodeType==NODE_EXPR)//printf(.,a+b)
+			{
+				expr_gen_code(p->sibling->child);//res is in %eax,don't need to movl!!!
+			}
+			else if(p->sibling->child->nodeType==NODE_VAR)
+				cout<<"\tmovl\t"<<p->sibling->child->var_name<<",%eax\n";//p->sibling->childs is arg 2,3,4...
+			else
+			{
+				return;//error
+			}
+			cout<<"\tsubl\t$8, %esp\n"
+			<<"\tpushl\t%eax\n"
+			<<"\tpushl\t$.LC"<<strlist[p->str_val]<<endl
+			<<"\tcall\tprintf\n"
+			<<"\taddl\t$16, %esp\n"
+			<<endl;
+			// movl	a, %eax
+			// subl	$8, %esp// esp: -8-->+16
+			// pushl	%eax
+			// pushl	$.LC1
+			// call	printf
+			// addl	$16, %esp
+		}
+		else
+		{
+			cerr<<err_str;
+		}
+	}
+	else if(t_type==STMT_SCANF)
+	{
+		if(p->sibling->child->sibling==nullptr)//printf("%d",a)//注意第二个孩子是block
+		{// esp: -8-->+16
+			cout<<"\tsubl\t$8, %esp\n"//p->sibling->childs is arg 2,3,4...
+			<<"\tpushl\t$"<<p->sibling->child->var_name<<"\n"
+			<<"\tpushl\t$.LC"<<strlist[p->str_val]<<endl
+			<<"\tcall\t__isoc99_scanf\n"//static int: __isoc99_scanf  int: scanf
+			<<"\taddl\t$16, %esp\n"
+			<<endl;
+			// subl	$8, %esp
+			// pushl	$a
+			// pushl	$.LC0
+			// call	scanf
+			// addl	$16, %esp
+		}
+		else
+		{
+			cerr<<err_str;
+		}
+	}
+	else if(t_type==STMT_ASSIGN)
+	{
+		if(p->sibling->nodeType==NODE_CONST)//a=1
+		{
+			int num;
+			if(p->sibling->val_type_flag=='i')
+				num=p->sibling->int_val;
+			else if(p->sibling->val_type_flag=='c')
+				num=int(p->sibling->ch_val);
+			else if(p->sibling->val_type_flag=='b')
+				num=int(p->sibling->int_val);
+			else
+				;//num=p->sibling->int_val;
+			cout<<"\tmovl\t$"<<num<<", "<<p->var_name<<endl;
+		}
+		else if(p->sibling->nodeType==NODE_VAR)//a=b
+		{
+			cout<<"\tmovl\t"<<p->sibling->var_name<<", "<<p->var_name<<endl;
+		}
+		else if(p->sibling->nodeType==NODE_EXPR)//a=2+1
+		{
+			//let expr'res be %eax
+			expr_gen_code(p->sibling);
+			cout<<"\tmovl\t%eax, "<<p->var_name<<endl;
+		}
+		else
+		{
+			;
+		}
+	}
+	else if(t_type>=STMT_ADD_ASSIGN&&t_type<=STMT_MUL_ASSIGN)
+	{//8 9 10
+		string a_self[20];
+		a_self[STMT_ADD_ASSIGN]="addl";
+		a_self[STMT_SUB_ASSIGN]="subl";
+		a_self[STMT_MUL_ASSIGN]="imull";
+		if(p->sibling->nodeType==NODE_CONST)//a+=1
+		{
+			cout<<"\t"<<a_self[t_type]<<"\t$"<<p->sibling->int_val<<", "<<p->var_name<<endl;
+		}
+		else if(p->sibling->nodeType==NODE_VAR)//a=b
+		{
+			cout<<"\t"<<a_self[t_type]<<"\t"<<p->sibling->var_name<<", "<<p->var_name<<endl;
+		}
+		else if(p->sibling->nodeType==NODE_EXPR)//a=2+1
+		{
+			expr_gen_code(p->sibling);
+			cout<<"\t"<<a_self[t_type]<<"\t%eax, "<<p->var_name<<endl;
+		}
+		
+		else;
+	}
+	else if(t_type==STMT_DIV_ASSIGN)
+	{
+		cout<<"\tcltd\n";
+		if(p->sibling->nodeType==NODE_CONST)//a+=1
+		{
+			cout<<"\tmovl\t$"<<p->sibling->int_val<<", %ecx\n";
+		}
+		else if(p->sibling->nodeType==NODE_VAR)//a=b
+		{
+			cout<<"\tmovl\t"<<p->sibling->var_name<<", %ecx\n";
+		}
+		else if(p->sibling->nodeType==NODE_EXPR)//a=2+1
+		{
+			expr_gen_code(p->sibling);
+			cout<<"\tmovl\t%eax, %ecx\n";
+		}
+		else;
+
+		//我这里先mov ecx 后mov eax！！！因为ecx用到eax
+		cout<<"\tmovl\t"<<p->var_name<<", %eax\n"
+		<<"\tidivl\t%ecx\n";//此时商就在%eax了
+
+	}
+	else if(t_type==STMT_DECL_V)//    decl int  a  1   ;四级，
+	{							//对应：t   p    q  q.child
+		TreeNode* q=p->child;//a
+		while (q!=nullptr)
+		{
+			if(q->child!=nullptr)//a=b+3; int a;/int a=1;只声明只需要get label
+			{
+				if(q->child->nodeType==NODE_EXPR)
+				{	
+					expr_gen_code(q->child);
+					cout<<"\tmovl\t%eax, "<<q->var_name<<endl;
+				}
+					
+			}
+			q=q->sibling;
+		}
+	}
+	else if(t_type==STMT_IF_ELSE||t_type==STMT_IF)//if expr stmt or if expr block->(...)
+	{//if(a>1) if(a+3>4)      t    p           t    p    
+		cout<<"!!!!!!!!!!!!!!!!!!\n";
+		/****************表达式,获得%eax即可,然后看是不是0***********************************/
+		expr_gen_code(p);
+		cout<<"\ttestl\t%eax, %eax\n"//    
+		<<"\tje\t.L"<<label_index<<"\n";//   ------------if(0)  jmp L1     
+		
+		recursive_gen_code(p->sibling);//     -----------stmt1
+		if(p->sibling->sibling!=nullptr)
+			cout<<"\tjmp\t.L"<<label_index+1<<"\n"//------jmp L2
+		
+		<<".L"<<label_index<<":\n";//			-------------L1:
+		if(p->sibling->sibling!=nullptr)
+		{
+			recursive_gen_code(p->sibling->sibling);//----stmt2
+			cout<<".L"<<label_index+1<<":\n";//    ---------L2:
+		}
+		if(p->sibling->sibling!=nullptr)
+			label_index+=2;//update by accum 2
+		else
+			label_index+=1;
+		
+	}
+	else
+		cout<<t->stmt_type<<endl<<"error!!"<<endl;
+	
+}
+//先自己gen,再自己的孩子gen--比如遇到作用域很多级的(划掉)
+//是不是block调用一次就行，自己的孩子就都执行一遍了
+//避免自己调用函数，但需要孩子返回结果的情况——自己用孩子的结果+孩子自己的结果，就重复了！！
+void TreeNode::recursive_gen_code( TreeNode *t)
+{
+	if(t==nullptr)
+		return;
+	else if(t->nodeType==NODE_BLOCK)
+		t=t->child;
+	else if(t->nodeType==NODE_FUNC)
+		t=t->child->child;
+	else 
+		return;
+
+	if (t->nodeType == NODE_STMT)
+	{
+		stmt_gen_code(t);
+	}
+	else if(t->nodeType==NODE_EXPR)
+	{
+		expr_gen_code(t);
+	}
+	
+	TreeNode* p=t->sibling;
+	// while(p!=nullptr)
+	// {
+	// 	recursive_gen_code(p->child);
+	// 	p=p->sibling;
+	// }
+}
+
+void TreeNode::gen_code()//root调用
+{
+	cout<<"\n.text\n"
+	<<"\t.globl\tmain\n"
+	<<"\t.type\tmain, @function\n"
+	<<"main:\n.LFB0:\n"
+	<<"\tleal\t4(%esp), %ecx\n"
+	<<"\tandl\t$-16, %esp\n"
+	<<"\tpushl\t-4(%ecx)\n"
+	<<"\tpushl\t%ebp\n"//-----------
+	<<"\tmovl\t%esp, %ebp\n"//--------此两句就够
+	<<"\tpushl\t%ecx\n\n\n";
+
+	TreeNode *p = this->child;
+	while(p!=nullptr)
+	{
+		recursive_gen_code(p);
+		p = p->sibling;
+	}
+	// recursive_gen_code(this);
+
+
+	cout<<"\n\tmovl\t$0, %eax\n"//----
+	<<"\tmovl\t-4(%ebp), %ecx\n"
+	<<"\tleave\n"//-----
+	<<"\tleal\t-4(%ecx), %esp\n"
+	<<"\tret\n"//-----
+	
+	<<".LFE0:\n"//-----
+	<<"\t.size\tmain, .-main\n\n";//-----
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
+{
+	//!!!注意e1  e2 的顺序，因为subl S,D：D=D-S
+	TreeNode *e1 = t->child;TreeNode *e2=nullptr;
+	if(t->op_type!=OP_NEG&&t->op_type!=OP_NOT)
+		e2 = t->child->sibling;
+	
+	
+	if(t->op_type==OP_ADD||t->op_type==OP_MUL)
+	{
+		if (e1->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e1);// 
+			//cout << "\tmovl\t%eax"<< ", %eax\n";//movl eax eax 
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<< ", %eax\n";
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<< ", %eax\n";
+		else
+			return;//error
+
+		
+		if (e2->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e2);
+			cout << "\tmovl\t%eax"<< ", %edx\n";
+		}
+		else if (e2->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e2->int_val<< ", %edx\n";
+		else if(e2->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e2->var_name<< ", %edx\n";
+		else 
+			return;
+
+		switch (t->op_type)
+		{
+			case OP_ADD:
+				cout<<"\taddl\t%edx, %eax\n";break;
+			case OP_MUL:
+				cout<<"\timull\t%edx, %eax\n";break;
+			default:
+				break;
+		}
+		
+	}
+	else if(t->op_type==OP_SUB)
+	{
+	/*******************************************************/
+		if (e1->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e1);// 
+			//cout << "\tmovl\t%eax"<< ", %eax\n";//movl eax eax  
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<< ", %eax\n";
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<< ", %eax\n";
+		else
+			return;//error
+	/*******************************************************/
+		if (e2->nodeType==NODE_EXPR)
+		{
+			expr_gen_code(e2);
+			cout << "\tmovl\t%eax"<< ", %edx\n";
+		}
+		else if (e2->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e2->int_val<< ", %edx\n";
+		else if(e2->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e2->var_name<< ", %edx\n";
+		else 
+			return;
+	/*******************************************************/
+		cout<<"\tsubl\t%edx, %eax\n";
+		/*********************************
+		 *	6*2-12: 
+		wrong:
+		 	movl	$12, %edx---顺序提前了 是 e1  e2的问题
+			movl	$6, %edx
+			movl	$2, %eax
+			imull	%edx, %eax
+			movl	%eax, %eax
+			subl	%edx, %eax
+		ok:
+			movl	$6, %eax
+			movl	$2, %edx
+			imull	%edx, %eax
+			movl	$12, %edx
+			movl	%eax, %eax# 此句优化掉了
+			subl	%edx, %eax
+			*/
+		
+	}
+	else if(t->op_type==OP_DIV||t->op_type==OP_MOD)
+	{
+		if (e1->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e1);//已经在eax
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<<", %eax\n"; 
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<<", %eax\n";
+		else
+			return;//error
+
+		
+		if (e2->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e2);
+		}
+		else if (e2->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e2->int_val<< ", %ecx\n";
+		else if(e2->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e2->var_name<<", %ecx\n";
+		else 
+			return;
+		cout<<"\tcltd\n"
+		<<"\tidivl\t%ecx\n";//res is in %eax
+		if(t->op_type==OP_MOD)
+			cout<<"\tmovl\t%edx, %eax\n";
+		//-------------div-----------
+		// movl	_ZL1a, %eax
+		// movl	_ZL1b, %ecx
+		// cltd
+		// idivl	%ecx
+		// movl	%eax, _ZL1c--eax存商， edx存余数
+		//---------------mod---------
+		// movl	_ZL1a, %eax
+		// movl	_ZL1b, %ecx
+		// cltd
+		// idivl	%ecx
+
+		// #movl	%edx, %eax
+		// #movl	%eax, _ZL1c----使得结果存在%eax!!
+		// movl	%edx, _ZL1c
+		//-----------------------------------------------
+		// idivl S
+		// R[%edx] = R[%edx]:R[%eax] % S;
+		// R[%eax] = R[%edx]:R[%eax] / S;
+		// 有符号除法，保存余数和商
+
+		//cltd S
+		// R[%edx]:R[%eax] = 符号位扩展R[%eax]
+		// 转换为4字节
+	}
+	else if(t->op_type==OP_NEG)//-a
+	{
+		if(e1->nodeType==NODE_CONST)
+		{
+			cout<<"\tmovl\t$-"<<e1->int_val<<", %eax\n";
+		}
+		else if(e1->nodeType==NODE_VAR)//################################可优化
+		{
+			cout<<"\tmovl\t"<<e1->var_name<<", %eax\n"
+			<<"\timull\t$-1, $eax\n";
+		}
+		else if(e1->nodeType==NODE_EXPR)
+		{
+			expr_gen_code(e1);
+			cout<<"\timull\t$-1, $eax\n";
+		}
+		else;
+	}
+	else if(t->op_type==OP_AND)
+	{	//-----------------e1--------------
+		if (e1->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e1);//已经在eax
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<<", %eax\n"; 
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<<", %eax\n";
+		else;
+
+		cout<<"\ttestl\t%eax, %eax\n"
+		<<"\tje\t.L"<<label_index<<"\n";// if 0 jmp L1
+
+		//-----------------e2-----------------------
+		if (e2->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e2);//已经在eax
+		}
+		else if (e2->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e2->int_val<<", %eax\n"; 
+		else if(e2->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e2->var_name<<", %eax\n";
+		else;
+		cout<<"\ttestl\t%eax, %eax\n"
+		<<"\tje\t.L"<<label_index<<"\n";//if 0 jmp L1
+
+		cout<<"\tmovl\t$1, %eax\n";//------------true  //jmp L2
+		cout<<"\tjmp\t.L"<<label_index+1<<"\n"
+		<<".L"<<label_index<<":\n";//-----------L1:false  
+		cout<<"\tmovl\t$0, %eax\n";
+
+		cout<<".L"<<label_index+1<<":\n";//L2
+
+		label_index+=2;
+	}
+	else if(t->op_type==OP_OR)
+	{	//-----------------e1--------------
+		if (e1->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e1);//已经在eax
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<<", %eax\n"; 
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<<", %eax\n";
+		else;
+
+		cout<<"\ttestl\t%eax, %eax\n"
+		<<"\tjne\t.L"<<label_index<<"\n";// if 1 jmp L1
+
+		//-----------------e2-----------------------
+		if (e2->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e2);//已经在eax
+		}
+		else if (e2->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e2->int_val<<", %eax\n"; 
+		else if(e2->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e2->var_name<<", %eax\n";
+		else;
+		cout<<"\ttestl\t%eax, %eax\n"
+		<<"\tjne\t.L"<<label_index<<"\n";//if 1 jmp L1
+
+		cout<<"\tmovl\t$0, %eax\n";//------------false  //jmp L2
+		cout<<"\tjmp\t.L"<<label_index+1<<"\n"
+		<<".L"<<label_index<<":\n";//-----------L1:true 
+		cout<<"\tmovl\t$1, %eax\n";
+
+		cout<<".L"<<label_index+1<<":\n";//L2
+		
+		label_index+=2;
+	}
+	else if(t->op_type==OP_NOT)
+	{	//-----------------e1--------------
+		if (e1->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e1);//已经在eax
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<<", %eax\n"; 
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<<", %eax\n";
+		else;
+
+		cout<<"\ttestl\t%eax, %eax\n"
+		<<"\tje\t.L"<<label_index<<"\n";// if 0 jmp L1 (!0 is true)
+
+		cout<<"\tmovl\t$0, %eax\n";//------------false  //jmp L2
+		cout<<"\tjmp\t.L"<<label_index+1<<"\n"
+		<<".L"<<label_index<<":\n";//-----------L1:true  
+		cout<<"\tmovl\t$1, %eax\n";
+
+		cout<<".L"<<label_index+1<<":\n";//L2
+		
+		label_index+=2;
+	}
+	else if(t->op_type>=OP_LESS_EQ&&t->op_type<=OP_NOT_EQ)
+	{
+		string a_op[20];
+		a_op[10]="jle";
+		a_op[11]="jl";
+		a_op[12]="jge";
+		a_op[13]="jg";
+		a_op[14]="je";
+		a_op[15]="jne";
+		//-----------------e1--------------
+		if (e1->nodeType==NODE_EXPR)
+		{
+			expr_gen_code(e1);//已经在eax
+		}
+		else if (e1->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e1->int_val<<", %eax\n"; 
+		else if(e1->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e1->var_name<<", %eax\n";
+		else;
+
+		//-----------------e2-----------------------
+		if (e2->nodeType ==NODE_EXPR)
+		{
+			expr_gen_code(e2);//已经在eax
+		}
+		else if (e2->nodeType == NODE_CONST)
+			cout << "\tmovl\t$"<<e2->int_val<<", %ebx\n"; 
+		else if(e2->nodeType == NODE_VAR)
+			cout << "\tmovl\t"<<e2->var_name<<", %ebx\n";
+		else;
+
+		cout<<"\tcmpl\t%ebx, %eax\n";//eax-ebx
+
+		cout<<"\t"<<a_op[t->op_type]<<"\t.L"<<label_index<<"\n";//if 1 jmp L1
+
+
+		cout<<"\tmovl\t$0, %eax\n";//------------false  //jmp L2
+		cout<<"\tjmp\t.L"<<label_index+1<<"\n"
+		<<".L"<<label_index<<":\n";//-----------L1:
+		cout<<"\tmovl\t$1, %eax\n";//------------true 
+
+		cout<<".L"<<label_index+1<<":\n";//L2
+		
+		label_index+=2;
+
+	}
+	else
+	;
+	
+}
+
+void TreeNode::stmt_gen_code(TreeNode *t)
+{
+	int t_type=t->stmt_type;
+
+	//cout<<StmtType_name[t_type]<<"!!!!!!!!!!!!"<<endl;
+
+	TreeNode* p=t->child;//decl outside of switch!!!
+
+	if(t_type==STMT_BLOCK||t_type==STMT_RETURN)
+		;
+	else if(t_type==STMT_PRINTF)
+	{
+		if(p->sibling==nullptr)//printf("ss")
+		{
+			cout<<"\tsubl\t$12, %esp\n"
+			<<"\tpushl\t$.LC"<<strlist[p->str_val]<<endl
+			<<"\tcall\tprintf\n"
+			<<"\taddl\t$16, %esp\n"
+			<<endl;
+			// subl	$12, %esp
+			// pushl	$.LC1
+			// call	printf
+			// addl	$16, %esp
+		}	
+		else if(p->sibling->child->sibling==nullptr)//printf("%d",a)//注意第二个孩子是block
+		{
+			if(p->sibling->child->nodeType==NODE_EXPR)//printf(.,a+b)
+			{
+				expr_gen_code(p->sibling->child);//res is in %eax,don't need to movl!!!
+			}
+			else if(p->sibling->child->nodeType==NODE_VAR)
+				cout<<"\tmovl\t"<<p->sibling->child->var_name<<",%eax\n";//p->sibling->childs is arg 2,3,4...
+			else
+			{
+				return;//error
+			}
+			cout<<"\tsubl\t$8, %esp\n"
+			<<"\tpushl\t%eax\n"
+			<<"\tpushl\t$.LC"<<strlist[p->str_val]<<endl
+			<<"\tcall\tprintf\n"
+			<<"\taddl\t$16, %esp\n"
+			<<endl;
+			// movl	a, %eax
+			// subl	$8, %esp// esp: -8-->+16
+			// pushl	%eax
+			// pushl	$.LC1
+			// call	printf
+			// addl	$16, %esp
+		}
+		else
+		{
+			cerr<<err_str;
+		}
+	}
+	else if(t_type==STMT_SCANF)
+	{
+		if(p->sibling->child->sibling==nullptr)//printf("%d",a)//注意第二个孩子是block
+		{// esp: -8-->+16
+			cout<<"\tsubl\t$8, %esp\n"//p->sibling->childs is arg 2,3,4...
+			<<"\tpushl\t$"<<p->sibling->child->var_name<<"\n"
+			<<"\tpushl\t$.LC"<<strlist[p->str_val]<<endl
+			<<"\tcall\t__isoc99_scanf\n"//static int: __isoc99_scanf  int: scanf
+			<<"\taddl\t$16, %esp\n"
+			<<endl;
+			// subl	$8, %esp
+			// pushl	$a
+			// pushl	$.LC0
+			// call	scanf
+			// addl	$16, %esp
+		}
+		else
+		{
+			cerr<<err_str;
+		}
+	}
+	else if(t_type==STMT_ASSIGN)
+	{
+		if(p->sibling->nodeType==NODE_CONST)//a=1
+		{
+			int num;
+			if(p->sibling->val_type_flag=='i')
+				num=p->sibling->int_val;
+			else if(p->sibling->val_type_flag=='c')
+				num=int(p->sibling->ch_val);
+			else if(p->sibling->val_type_flag=='b')
+				num=int(p->sibling->int_val);
+			else
+				;//num=p->sibling->int_val;
+			cout<<"\tmovl\t$"<<num<<", "<<p->var_name<<endl;
+		}
+		else if(p->sibling->nodeType==NODE_VAR)//a=b
+		{
+			cout<<"\tmovl\t"<<p->sibling->var_name<<", "<<p->var_name<<endl;
+		}
+		else if(p->sibling->nodeType==NODE_EXPR)//a=2+1
+		{
+			//let expr'res be %eax
+			expr_gen_code(p->sibling);
+			cout<<"\tmovl\t%eax, "<<p->var_name<<endl;
+		}
+		else
+		{
+			;
+		}
+	}
+	else if(t_type>=STMT_ADD_ASSIGN&&t_type<=STMT_MUL_ASSIGN)
+	{//8 9 10
+		string a_self[20];
+		a_self[STMT_ADD_ASSIGN]="addl";
+		a_self[STMT_SUB_ASSIGN]="subl";
+		a_self[STMT_MUL_ASSIGN]="imull";
+		if(p->sibling->nodeType==NODE_CONST)//a+=1
+		{
+			cout<<"\t"<<a_self[t_type]<<"\t$"<<p->sibling->int_val<<", "<<p->var_name<<endl;
+		}
+		else if(p->sibling->nodeType==NODE_VAR)//a=b
+		{
+			cout<<"\t"<<a_self[t_type]<<"\t"<<p->sibling->var_name<<", "<<p->var_name<<endl;
+		}
+		else if(p->sibling->nodeType==NODE_EXPR)//a=2+1
+		{
+			expr_gen_code(p->sibling);
+			cout<<"\t"<<a_self[t_type]<<"\t%eax, "<<p->var_name<<endl;
+		}
+		
+		else;
+	}
+	else if(t_type==STMT_DIV_ASSIGN)
+	{
+		cout<<"\tcltd\n";
+		if(p->sibling->nodeType==NODE_CONST)//a+=1
+		{
+			cout<<"\tmovl\t$"<<p->sibling->int_val<<", %ecx\n";
+		}
+		else if(p->sibling->nodeType==NODE_VAR)//a=b
+		{
+			cout<<"\tmovl\t"<<p->sibling->var_name<<", %ecx\n";
+		}
+		else if(p->sibling->nodeType==NODE_EXPR)//a=2+1
+		{
+			expr_gen_code(p->sibling);
+			cout<<"\tmovl\t%eax, %ecx\n";
+		}
+		else;
+
+		//我这里先mov ecx 后mov eax！！！因为ecx用到eax
+		cout<<"\tmovl\t"<<p->var_name<<", %eax\n"
+		<<"\tidivl\t%ecx\n";//此时商就在%eax了
+
+	}
+	else if(t_type==STMT_DECL_V)//    decl int  a  1   ;四级，
+	{							//对应：t   p    q  q.child
+		TreeNode* q=p->child;//a
+		while (q!=nullptr)
+		{
+			if(q->child!=nullptr)//a=b+3; int a;/int a=1;只声明只需要get label
+			{
+				if(q->child->nodeType==NODE_EXPR)
+				{	
+					expr_gen_code(q->child);
+					cout<<"\tmovl\t%eax, "<<q->var_name<<endl;
+				}
+					
+			}
+			q=q->sibling;
+		}
+	}
+	else if(t_type==STMT_IF_ELSE||t_type==STMT_IF)//if expr stmt or if expr block->(...)
+	{//if(a>1) if(a+3>4)      t    p           t    p    
+		/****************表达式,获得%eax即可,然后看是不是0***********************************/
+		expr_gen_code(p);
+		cout<<"\ttestl\t%eax, %eax\n"//    
+		<<"\tje\t.L"<<label_index<<"\n";//   ------------if(0)  jmp L1     
+		
+		recursive_gen_code(p->sibling);//     -----------stmt1
+		if(p->sibling->sibling!=nullptr)
+			cout<<"\tjmp\t.L"<<label_index+1<<"\n"//------jmp L2
+		
+		<<".L"<<label_index<<":\n";//			-------------L1:
+		if(p->sibling->sibling!=nullptr)
+		{
+			recursive_gen_code(p->sibling->sibling);//----stmt2
+			cout<<".L"<<label_index+1<<":\n";//    ---------L2:
+		}
+		if(p->sibling->sibling!=nullptr)
+			label_index+=2;//update by accum 2
+		else
+			label_index+=1;
+		
+	}
+	else
+		cout<<t->stmt_type<<endl<<"error!!"<<endl;
+	
+}
+//先自己gen,再自己的孩子gen--比如遇到作用域很多级的(划掉)
+//是不是block调用一次就行，自己的孩子就都执行一遍了
+//避免自己调用函数，但需要孩子返回结果的情况——自己用孩子的结果+孩子自己的结果，就重复了！！
+void TreeNode::recursive_gen_code(TreeNode *t)
+{
+	bool f=1;
+	if(t==nullptr)
+		return;
+	if (t->nodeType == NODE_STMT)
+	{
+		stmt_gen_code(t);
+		f=0;
+	}
+	else if(t->nodeType==NODE_EXPR)
+	{
+		expr_gen_code(t);
+		f=0;
+	}
+	else;
+	if(f)
+	recursive_gen_code(t->child);
+
+	recursive_gen_code(t->sibling);
+
+
+}
+
+void TreeNode::gen_code()//root调用
+{
+	cout<<"\n.text\n"
+	<<"\t.globl\tmain\n"
+	<<"\t.type\tmain, @function\n"
+	<<"main:\n.LFB0:\n"
+	<<"\tleal\t4(%esp), %ecx\n"
+	<<"\tandl\t$-16, %esp\n"
+	<<"\tpushl\t-4(%ecx)\n"
+	<<"\tpushl\t%ebp\n"//-----------
+	<<"\tmovl\t%esp, %ebp\n"//--------此两句就够
+	<<"\tpushl\t%ecx\n\n\n";
+
+	// TreeNode *p = this->child;
+	// while(p!=nullptr)
+	// {
+		recursive_gen_code(this);
+	// 	p = p->sibling;
+	// }
+	// recursive_gen_code(this);
+
+
+	cout<<"\n\tmovl\t$0, %eax\n"//----
+	<<"\tmovl\t-4(%ebp), %ecx\n"
+	<<"\tleave\n"//-----
+	<<"\tleal\t-4(%ecx), %esp\n"
+	<<"\tret\n"//-----
+	
+	<<".LFE0:\n"//-----
+	<<"\t.size\tmain, .-main\n\n";//-----
+
+}
