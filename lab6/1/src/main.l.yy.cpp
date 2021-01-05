@@ -1237,7 +1237,18 @@ YY_RULE_SETUP
     //stoi（字符串，起始位置，n进制），将 n 进制的字符串转化为十进制
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->type = TYPE_INT;
-    node->int_val = stoi(string(yytext).substr(2,string(yytext).length()),0,16);
+    //node->int_val = stoi(string(yytext).substr(2,string(yytext).length()),0,16);
+    string res_str=string(yytext).substr(2,string(yytext).length());
+    int res=0;
+    for(int i=0;i<res_str.length();i++)
+    {
+        if(res_str[i]>='a')
+        res=res*16+res_str[i]-'a'+10;
+        else
+        res=res*16+res_str[i]-'0';
+    }
+    
+    node->int_val=res%4294967296;//2**32  默认int
     node->val_type_flag='i';
     yylval = node;
     return INTEGER_H;
@@ -1246,11 +1257,21 @@ YY_RULE_SETUP
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 198 "src/main.l"
+#line 209 "src/main.l"
 {
+
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->type = TYPE_INT;
-    node->int_val = stoi(string(yytext).substr(1,string(yytext).length()),0,8);
+    //node->int_val = stoi(string(yytext).substr(1,string(yytext).length()),0,8);
+
+    string res_str=string(yytext).substr(1,string(yytext).length());
+    int res=0;
+    for(int i=0;i<res_str.length();i++)
+    {
+        res=res*8+res_str[i]-'0';
+    }
+
+    node->int_val=res%4294967296;//2**32  默认int
     node->val_type_flag='i';
     yylval = node;
     return INTEGER_H;
@@ -1259,7 +1280,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 207 "src/main.l"
+#line 228 "src/main.l"
 {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->type = TYPE_INT;
@@ -1272,7 +1293,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 217 "src/main.l"
+#line 238 "src/main.l"
 {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->type = TYPE_CHAR;
@@ -1285,7 +1306,7 @@ YY_RULE_SETUP
 case 65:
 /* rule 65 can match eol */
 YY_RULE_SETUP
-#line 226 "src/main.l"
+#line 247 "src/main.l"
 {
     TreeNode *node = new TreeNode(lineno,NODE_CONST);
     node->type = TYPE_STRING;
@@ -1298,17 +1319,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 239 "src/main.l"
+#line 260 "src/main.l"
 {
     cerr << "[line "<< lineno <<" ] unknown character:" << yytext << endl;
 }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 242 "src/main.l"
+#line 263 "src/main.l"
 ECHO;
 	YY_BREAK
-#line 1312 "src/main.l.yy.cpp"
+#line 1333 "src/main.l.yy.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(BLOCK_COMMENT):
 case YY_STATE_EOF(LINE_COMMENT):
@@ -2274,6 +2295,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 242 "src/main.l"
+#line 263 "src/main.l"
 
 

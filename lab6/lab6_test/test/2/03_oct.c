@@ -1,3 +1,4 @@
+int help;
 int main(){
     int a=037777777777;
     if(a==-1){

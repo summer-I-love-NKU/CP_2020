@@ -4,8 +4,8 @@ int main () {
     int b;
     a = -2;
     b = 1;
-    a = a +b  +(a + b) % (a - b);
-    //a = a - -b + -(a + b) % -(a - b);
+    //a = a +b  +(a + b) % (a - b);
+    a = a - -b + -(a + b) % -(a - b);
     printf("%d\n",a);
     return 0;
 }

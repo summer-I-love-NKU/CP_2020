@@ -188,7 +188,18 @@ STRING \"([^\".])+\"
     //stoi（字符串，起始位置，n进制），将 n 进制的字符串转化为十进制
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->type = TYPE_INT;
-    node->int_val = stoi(string(yytext).substr(2,string(yytext).length()),0,16);
+    //node->int_val = stoi(string(yytext).substr(2,string(yytext).length()),0,16);
+    string res_str=string(yytext).substr(2,string(yytext).length());
+    int res=0;
+    for(int i=0;i<res_str.length();i++)
+    {
+        if(res_str[i]>='a')
+        res=res*16+res_str[i]-'a'+10;
+        else
+        res=res*16+res_str[i]-'0';
+    }
+    
+    node->int_val=res%4294967296;//2**32  默认int
     node->val_type_flag='i';
     yylval = node;
     return INTEGER_H;
@@ -196,9 +207,19 @@ STRING \"([^\".])+\"
 }
 
 {INTEGER_O} {
+
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
     node->type = TYPE_INT;
-    node->int_val = stoi(string(yytext).substr(1,string(yytext).length()),0,8);
+    //node->int_val = stoi(string(yytext).substr(1,string(yytext).length()),0,8);
+
+    string res_str=string(yytext).substr(1,string(yytext).length());
+    int res=0;
+    for(int i=0;i<res_str.length();i++)
+    {
+        res=res*8+res_str[i]-'0';
+    }
+
+    node->int_val=res%4294967296;//2**32  默认int
     node->val_type_flag='i';
     yylval = node;
     return INTEGER_H;

@@ -1,3 +1,4 @@
+int help;
 int main(){
     int a=20,b,c=16;
     scanf("%d",&b);

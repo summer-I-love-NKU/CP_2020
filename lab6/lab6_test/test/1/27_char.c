@@ -11,7 +11,9 @@ int main(){
     printf("%c",s);
     printf("%c",t);
     printf("%c",a);
+
     printf("\n");//printf("%c",r);
+    
     printf("%c",t);
     return 0;
 }

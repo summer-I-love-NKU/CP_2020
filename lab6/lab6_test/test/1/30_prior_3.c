@@ -8,8 +8,8 @@ int main () {
     c = 28;
     int t;
     if (c + a != b) {
-        b=-b;t=c%b;
-        //t = c % -b;
+        //b=-b;t=c%b;
+        t = c % -b;
         printf("%d\n",t);
     }
     if (b - c == a) {

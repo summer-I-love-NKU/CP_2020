@@ -24,13 +24,15 @@ int main()
     if (root != NULL)
     {
         #if PRINT_AST
+        cout<<"# Simple C Complier created by Shen Zhe, 2021.1\n\n"
+        <<"#*********************************** AST ***********************************\n";
         // outfile.open("../tests/AST",ios::in);
             root->genNodeId();
-            cout << "#          Node"
-                << "         Node Type"
+            cout << "#        Node Type"
+                << "         Node Info"
                 << "                   Children" << endl;
             root->printAST();
-            cout << "\n\n#***********************asm code***********************\n\n"<<endl;
+            cout << "\n\n#*********************************** ASM CODE ***********************************\n";
         #endif
         root->gen_header();
         root->get_label();//get label and set the： .data,  .section .rodata,

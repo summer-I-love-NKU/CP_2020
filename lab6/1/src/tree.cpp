@@ -28,62 +28,6 @@
 	}
 
 	/**************************************symbol_table*********************************************/
-	symbol_table symtbl;
-
-	int symbol_table::lookup(string name)
-	{
-		for (int i = 0; i < size; i++)
-			if (table[i].name == name)
-				return i;
-		return -1;
-	}
-
-	int symbol_table::insert(string name, int token)
-	{
-		if (size >= MAX_ID)
-			return -1;
-		table[size].name = name;
-		table[size].token = token;
-		table[size].type = "none";
-		size++;
-		return size - 1;
-	}
-
-	int symbol_table::gettoken(string name)
-	{
-		for (int i = 0; i < size; i++)
-			if (table[i].name == name)
-				return table[i].token;
-		return -1;
-	}
-
-	string& symbol_table::getname(int pos)
-	{
-		return table[pos].name;
-	}
-
-	int symbol_table::set_type(int pos, string type)
-	{
-		if (pos < 0 || pos >= size)
-		{
-			cerr << "Bad identifier" << endl;
-			return -1;
-		}
-
-		table[pos].type = type;
-		return 0;//
-	}
-
-	string symbol_table::get_type(int pos)
-	{
-		if (pos < 0 || pos >= size)
-		{
-			cerr << "Bad identifier" << endl;
-			return "error";
-		}
-
-		return table[pos].type;
-	}
 #endif
 	
 #if 1
@@ -91,7 +35,7 @@
 	/**********************************************tree.cpp***************************************************/
 		string NODETYPE_name[20] = {"const","var","array","expr","type","stmt","prog","func","block","10"};
 		string StmtType_name[30] = {"block","skip", "return","decl var","decl ptr","decl ref","decl array","assign","add_assign","sub_assign","mul_assign","div_assign",
-		"self_add_assign","self_sub_assign","printf","scanf","if","if else","while","for","21"};
+		"self_add_assign","self_sub_assign","printf","scanf","if","if else","if else if","while","for","22"};
 		string ValueType_name[20] = {"bool", "int", "char", "string","void","const int","const char","8"};
 		string OperatorType_name[30] = {"reserved","+","-","*","/","%","0-","&&","||","!","<=","<",">=",">","==","!=","17"};
 
@@ -302,23 +246,201 @@ void TreeNode::gen_tail()
 		<< _section << endl;
 }
 /*****************string const*******************/
-string rodata[MAX_RODATA_NUM];int ro_i=0;
 // string operator + (string &content, int number) {
 //     return content + to_string(number);}
 // string& operator += (string &content, int number) {
 // 	return content = content + to_string(number);}
-// map <字符串， 标签序列号> 字符串表
-map<string, int> strlist;
-static int strindex = 0;
-// 
-/***************label index****************/
-static int label_index=1;//!!!!!!!!!!!!
-static int tval=0;
-/*********************************************************************/
-// 描述了代码生成的基本框架
-// 以while为例，给出打label的一个示例
-// 以加法为例，给出生成x86汇编代码的一个示例
-void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
+
+//.rodata段   .data段
+string rodata[MAX_RODATA_NUM];int ro_i=0;
+map<string, int> strlist;static int strindex = 0;
+
+string vardata[MAX_RODATA_NUM];int var_i=0;
+
+static int label_index=1;
+//要防止多标签混乱——子过程也用label_index， 所以分了.L  .Lw  .Lif  .Lf
+//静态标签、入栈保护
+
+
+
+/***************************get label: 为字符串和声明分配常量空间：.data  or .bss  .comm ??******************************************/
+
+void TreeNode::stmt_get_label(TreeNode *t)//set_data_seg_AND_get_label
+{
+	if (t->stmt_type == STMT_DECL_V)//可能要作用域？？
+	{
+		
+		if(t->child->type->type==VALUE_INT||t->child->type->type==VALUE_CHAR||t->child->type->type==VALUE_CONST_INT||t->child->type->type==VALUE_CONST_CHAR)
+		{
+			TreeNode* p=t->child->child;///int a,b,c=1;
+			//cout<<".data"<<endl;	//   t     p  
+			map<string,string> type_size;
+			type_size["int"]="4";type_size["char"]="1";
+			
+			while (p!=nullptr)
+			{
+				// if(p->child!=nullptr)//int a=1;
+				// {
+					vardata[var_i]="\t.align 4\n";
+					vardata[var_i]+="\t.type\t"+p->var_name+", @object\n";
+					
+					if(t->child->type->type==VALUE_CONST_INT||t->child->type->type==VALUE_INT)
+					{
+						vardata[var_i]+="\t.size\t"+p->var_name+", 4\n";
+					}
+					else //if(t->child->type->type==VALUE_CONST_CHAR||t->child->type->type==VALUE_CHAR)
+					{
+						vardata[var_i]+="\t.size\t"+p->var_name+", 1\n";
+					}
+					
+					vardata[var_i]+=p->var_name+":\n";
+					if(p->child!=nullptr)
+						vardata[var_i]+="\t.long\t"+to_string(p->child->int_val)+"\n";
+					else
+						vardata[var_i]+="\t.long\t"+to_string(0)+"\n\n";
+					var_i++;
+				// }
+				// else//int a; default=0
+				// {
+				// 	cout<<"\t.align 4\n"//int 4   char 1 
+				// 	<<"\t.type\t"<<p->var_name<<", @object\n"
+				// 	<<"\t.size\t"<<p->var_name<<", 4\n"
+				// 	<<p->var_name<<":\n"
+				// 	<<"\t.long\t"<<0<<endl
+				// 	<<endl;
+
+				// }
+				p=p->sibling;
+
+			}
+		}
+		// else if(t->child->type->type==VALUE_CHAR)
+		// {
+		// 	TreeNode* p=t->child->child;///char
+		// 	cout<<".data"<<endl;	//  
+		// 	while (p!=nullptr)
+		// 	{
+		// 		if(p->child!=nullptr)
+		// 		{
+		// 			cout<<"\t.align 1\n"
+		// 			<<"\t.type\t"<<p->var_name<<", @object\n"
+		// 			<<"\t.size\t"<<p->var_name<<", 1\n"
+		// 			<<p->var_name<<":\n"
+		// 			<<"\t.long\t"<<int(p->child->ch_val)<<endl
+		// 			<<endl;
+
+		// 		}
+		// 		else//int a; default=0
+		// 		{
+		// 			cout<<"\t.align 1\n"//int 4   char 1 
+		// 			<<"\t.type\t"<<p->var_name<<", @object\n"
+		// 			<<"\t.size\t"<<p->var_name<<", 1\n"
+		// 			<<p->var_name<<":\n"
+		// 			<<"\t.long\t"<<0<<endl
+		// 			<<endl;
+
+		// 		}
+		// 		p=p->sibling;
+		// 		/*
+		// 			movb	$97, t
+
+		// 			movzbl	s, %eax
+		// 			movsbl	%al, %eax
+		// 			subl	$12, %esp
+		// 			pushl	%eax
+		// 			call	putchar
+		// 			addl	$16, %esp
+		// 			*/
+		// 	}
+		// }
+		// else;
+		
+	}
+	else if (t->stmt_type == STMT_PRINTF)
+	{
+		TreeNode *p = t->child;
+		//cout << ".section	.rodata\n";
+		while (p != nullptr&&p->nodeType==NODE_CONST)//printf("%d",12)
+		{
+			if(strlist.count(p->str_val)==0)
+			{
+				strlist[p->str_val] = strindex;
+				// cout << ".LC"<<strindex++<<":\n\t.string\t" << 
+				// p->str_val << "\n" << endl;
+				rodata[ro_i++]=".LC"+to_string(strindex++)+string(":\n\t.string\t") +
+				p->str_val + "\n";
+				
+			}
+			p = p->sibling;
+		}
+	}
+	else if (t->stmt_type == STMT_SCANF)
+	{
+		TreeNode *p = t->child;
+		// cout << ".section	.rodata\n";
+		while (p != nullptr&&p->nodeType==NODE_CONST)//printf("%d",12)
+		{
+			if(strlist.count(p->str_val)==0)
+			{
+				strlist[p->str_val] = strindex;
+				rodata[ro_i++]=".LC"+to_string(strindex++)+string(":\n\t.string\t") +
+				p->str_val + "\n" ;
+			}
+			p = p->sibling;
+		}
+	}
+	else
+	{
+		;
+	}
+}
+void TreeNode::recursive_get_label(TreeNode *t)
+{
+	if(t==nullptr)
+		return;
+	if (t->nodeType == NODE_STMT)
+	{
+		stmt_get_label(t);
+	}
+	TreeNode* p=t->child;
+	while(p!=nullptr)
+	{
+		//if  ! stmt || ! expr
+		recursive_get_label(p);
+		p=p->sibling;
+	}
+	
+}
+
+void TreeNode::get_label()//root call it 
+{
+	// this->label.begin = "_start";
+	TreeNode* p=this->child;
+	while (p!=nullptr)
+	{
+		recursive_get_label(p);
+		p=p->sibling;//root's children
+	}
+
+	cout << ".section	.rodata\n";
+	for (int i = 0; i < ro_i; i++)
+	{
+		cout<<rodata[i];
+	}
+	
+	cout << "\n.data\n";
+	for (int i = 0; i < var_i; i++)
+	{
+		cout<<vardata[i];
+	}
+	cout<<endl;
+	
+	
+}
+
+/***********************************gen code :stmt expr ************************************************/
+
+void TreeNode::expr_gen_code( TreeNode *t)//注意，结果存在%eax，这个原则，会使设计很方便！！！
 {
 	//!!!注意e1  e2 的顺序，因为subl S,D：D=D-S
 	TreeNode *e1 = t->child;TreeNode *e2=nullptr;
@@ -326,7 +448,7 @@ void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
 		e2 = t->child->sibling;
 	
 	
-	if(t->op_type==OP_ADD||t->op_type==OP_MUL)
+	if(t->op_type==OP_ADD||t->op_type==OP_MUL)//%eax 入栈保护
 	{
 		if (e1->nodeType ==NODE_EXPR)
 		{
@@ -367,7 +489,7 @@ void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
 		}
 		
 	}
-	else if(t->op_type==OP_SUB)
+	else if(t->op_type==OP_SUB)//%eax 入栈保护
 	{
 	/*******************************************************/
 		if (e1->nodeType ==NODE_EXPR)
@@ -418,7 +540,7 @@ void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
 			*/
 		
 	}
-	else if(t->op_type==OP_DIV||t->op_type==OP_MOD)
+	else if(t->op_type==OP_DIV||t->op_type==OP_MOD)//%eax 入栈保护  先movl到eax ecx!
 	{
 		if (e1->nodeType ==NODE_EXPR)
 		{
@@ -435,6 +557,7 @@ void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
 		if (e2->nodeType ==NODE_EXPR)
 		{
 			expr_gen_code(e2);
+			cout << "\tmovl\t%eax, %ecx\n";
 		}
 		else if (e2->nodeType == NODE_CONST)
 			cout << "\tmovl\t$"<<e2->int_val<< ", %ecx\n";
@@ -482,16 +605,16 @@ void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
 		{
 			cout<<"\tmovl\t"<<e1->var_name<<", %eax\n"
 			<<"\tnegl\t%eax\n";
-			// <<"\timull\t$-1, %eax\n";
+			// <<"\timull\t$-1, %eax\n";错误！！
 		}
 		else if(e1->nodeType==NODE_EXPR)
 		{
 			expr_gen_code(e1);
-			cout<<"\timull\t$-1, $eax\n";
+			cout<<"\tnegl\t%eax\n";
 		}
 		else;
 	}
-	else if(t->op_type==OP_AND)
+	else if(t->op_type==OP_AND)//static label
 	{	//-----------------e1--------------
 		if (e1->nodeType ==NODE_EXPR)
 		{
@@ -507,8 +630,9 @@ void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
 		}
 		else;
 
+		int static_index=label_index;
 		cout<<"\ttestl\t%eax, %eax\n"
-		<<"\tje\t.L"<<label_index<<"\n";// if 0 jmp L1
+		<<"\tje\t.Land"<<static_index<<"\n";// if 0 jmp L1
 		//-----------------e2-----------------------
 		if (e2->nodeType ==NODE_EXPR)
 		{
@@ -524,18 +648,18 @@ void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
 		}
 		else;
 		cout<<"\ttestl\t%eax, %eax\n"
-		<<"\tje\t.L"<<label_index<<"\n";//if 0 jmp L1
+		<<"\tje\t.Land"<<static_index<<"\n";//if 0 jmp L1
 
 		cout<<"\tmovl\t$1, %eax\n";//------------true  //jmp L2
-		cout<<"\tjmp\t.L"<<label_index+1<<"\n"
-		<<".L"<<label_index<<":\n";//-----------L1:false  
+		cout<<"\tjmp\t.Land"<<static_index+1<<"\n"
+		<<".Land"<<static_index<<":\n";//-----------L1:false  
 		cout<<"\tmovl\t$0, %eax\n";
 
-		cout<<".L"<<label_index+1<<":\n";//L2
+		cout<<".Land"<<static_index+1<<":\n";//L2
 
 		label_index+=2;
 	}
-	else if(t->op_type==OP_OR)
+	else if(t->op_type==OP_OR)//static label
 	{	//-----------------e1--------------
 		if (e1->nodeType ==NODE_EXPR)
 		{
@@ -547,8 +671,9 @@ void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
 			cout << "\tmovl\t"<<e1->var_name<<", %eax\n";
 		else;
 
+		int static_index=label_index;
 		cout<<"\ttestl\t%eax, %eax\n"
-		<<"\tjne\t.L"<<label_index<<"\n";// if 1 jmp L1
+		<<"\tjne\t.Lor"<<static_index<<"\n";// if 1 jmp L1
 
 		//-----------------e2-----------------------
 		if (e2->nodeType ==NODE_EXPR)
@@ -561,14 +686,14 @@ void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
 			cout << "\tmovl\t"<<e2->var_name<<", %eax\n";
 		else;
 		cout<<"\ttestl\t%eax, %eax\n"
-		<<"\tjne\t.L"<<label_index<<"\n";//if 1 jmp L1
+		<<"\tjne\t.Lor"<<static_index<<"\n";//if 1 jmp L1
 
 		cout<<"\tmovl\t$0, %eax\n";//------------false  //jmp L2
-		cout<<"\tjmp\t.L"<<label_index+1<<"\n"
-		<<".L"<<label_index<<":\n";//-----------L1:true 
+		cout<<"\tjmp\t.Lor"<<static_index+1<<"\n"
+		<<".Lor"<<static_index<<":\n";//-----------L1:true 
 		cout<<"\tmovl\t$1, %eax\n";
 
-		cout<<".L"<<label_index+1<<":\n";//L2
+		cout<<".Lor"<<static_index+1<<":\n";//L2
 		
 		label_index+=2;
 	}
@@ -585,26 +710,33 @@ void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
 		else;
 
 		cout<<"\ttestl\t%eax, %eax\n"
-		<<"\tje\t.L"<<label_index<<"\n";// if 0 jmp L1 (!0 is true)
+		<<"\tje\t.Lnot"<<label_index<<"\n";// if 0 jmp L1 (!0 is true)
 
 		cout<<"\tmovl\t$0, %eax\n";//------------false  //jmp L2
-		cout<<"\tjmp\t.L"<<label_index+1<<"\n"
-		<<".L"<<label_index<<":\n";//-----------L1:true  
+		cout<<"\tjmp\t.Lnot"<<label_index+1<<"\n"
+		<<".Lnot"<<label_index<<":\n";//-----------L1:true  
 		cout<<"\tmovl\t$1, %eax\n";
 
-		cout<<".L"<<label_index+1<<":\n";//L2
+		cout<<".Lnot"<<label_index+1<<":\n";//L2
 		
 		label_index+=2;
 	}
 	else if(t->op_type>=OP_LESS_EQ&&t->op_type<=OP_NOT_EQ)
 	{
 		string a_op[20];
-		a_op[10]="jle";
-		a_op[11]="jl";
-		a_op[12]="jge";
-		a_op[13]="jg";
-		a_op[14]="je";
-		a_op[15]="jne";
+		a_op[OP_LESS_EQ]="jle";
+		a_op[OP_LESS_THAN]="jl";
+		a_op[OP_MORE_EQ]="jge";
+		a_op[OP_MORE_THAN]="jg";
+		a_op[OP_EQ]="je";
+		a_op[OP_NOT_EQ]="jne";
+		string l_op[20];
+		l_op[OP_LESS_EQ]="le";
+		l_op[OP_LESS_THAN]="l";
+		l_op[OP_MORE_EQ]="ge";
+		l_op[OP_MORE_THAN]="g";
+		l_op[OP_EQ]="e";
+		l_op[OP_NOT_EQ]="ne";
 		//-----------------e1--------------
 		if (e1->nodeType==NODE_EXPR)
 		{
@@ -620,6 +752,7 @@ void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
 		if (e2->nodeType ==NODE_EXPR)
 		{
 			expr_gen_code(e2);//已经在eax
+			cout << "\tmovl\t%eax, %ebx\n"; 
 		}
 		else if (e2->nodeType == NODE_CONST)
 			cout << "\tmovl\t$"<<e2->int_val<<", %ebx\n"; 
@@ -627,17 +760,18 @@ void TreeNode::expr_gen_code( TreeNode *t)//结果存在%eax！！！
 			cout << "\tmovl\t"<<e2->var_name<<", %ebx\n";
 		else;
 
-		cout<<"\tcmpl\t%ebx, %eax\n";//eax-ebx
+		//这里就很安全，label_index不存在子过程调用
+		cout<<"\tcmpl\t%ebx, %eax\n";//eax-ebx  cmpl  e2  e1  :e1-e2
 
-		cout<<"\t"<<a_op[t->op_type]<<"\t.L"<<label_index<<"\n";//if 1 jmp L1
+		cout<<"\t"<<a_op[t->op_type]<<"\t.L"<<l_op[t->op_type]<<label_index<<"\n";//if 1 jmp L1
 
 
 		cout<<"\tmovl\t$0, %eax\n";//------------false  //jmp L2
-		cout<<"\tjmp\t.L"<<label_index+1<<"\n"
-		<<".L"<<label_index<<":\n";//-----------L1:
+		cout<<"\tjmp\t.L"<<l_op[t->op_type]<<label_index+1<<"\n"
+		<<".L"<<l_op[t->op_type]<<label_index<<":\n";//-----------L1:
 		cout<<"\tmovl\t$1, %eax\n";//------------true 
 
-		cout<<".L"<<label_index+1<<":\n";//L2
+		cout<<".L"<<l_op[t->op_type]<<label_index+1<<":\n";//L2
 		
 		label_index+=2;
 
@@ -651,7 +785,7 @@ void TreeNode::stmt_gen_code(TreeNode *t)
 {
 	if(t->nodeType==NODE_BLOCK)
 		t=t->child;
-	else if(t->stmt_type==STMT_RETURN)return;
+	else if(t->stmt_type==STMT_RETURN||t->stmt_type==STMT_SKIP)return;
 	else;
 
 	int t_type=t->stmt_type;
@@ -725,40 +859,39 @@ void TreeNode::stmt_gen_code(TreeNode *t)
 				// call	printf
 				// addl	$16, %esp
 			}
-			else
+			else//注意参数压栈顺序
 			{
-				if(p->sibling->child->nodeType==NODE_EXPR)//printf(.,a+b)
+				TreeNode* tmp,*e1,*e2,*e3,*e4,*e5,*e6;
+				TreeNode* a[20];
+				tmp=p->sibling->child;//e1
+				int num_i=0;
+				while (tmp!=nullptr)
 				{
-					expr_gen_code(p->sibling->child);//res is in %eax,don't need to movl!!!
+					a[++num_i]=tmp;
+					tmp=tmp->sibling;
 				}
-				else if(p->sibling->child->nodeType==NODE_VAR)
-					cout<<"\tmovl\t"<<p->sibling->child->var_name<<",%eax\n";//p->sibling->childs is arg 2,3,4...
-				else
+				//num_i 个参数需要输出，从右往左压栈！！！
+				while(num_i)
 				{
-					return;//error
+					if(a[num_i]->nodeType==NODE_EXPR)//printf(.,a+b)
+					{
+						expr_gen_code(a[num_i]);//res is in %eax,don't need to movl!!!
+					}
+					else if(a[num_i]->nodeType==NODE_VAR)
+						cout<<"\tmovl\t"<<a[num_i]->var_name<<",%eax\n";//a[num_i]s is arg 2,3,4...
+					else
+					{
+						return;//error
+					}
+					PUSH_EAX;
+					num_i--;
 				}
-				PUSH_EAX;
-
-				if(p->sibling->child->sibling->nodeType==NODE_EXPR)//printf(.,a+b)
-				{
-					expr_gen_code(p->sibling->child->sibling);//res is in %eax,don't need to movl!!!
-				}
-				else if(p->sibling->child->sibling->nodeType==NODE_VAR)
-					cout<<"\tmovl\t"<<p->sibling->child->sibling->var_name<<",%eax\n";//p->sibling->childs is arg 2,3,4...
-				else
-				{
-					return;//error
-				}
-				PUSH_EAX;
-
-
-				cout<<"\tsubl\t$12, %esp\n"
-				// <<"\tpushl\t%eax\n"
-				// <<"\tpushl\t%eax\n"
-				// <<"\tpushl\t%eax\n"
+				
+				cout//<<"\tsubl\t$12, %esp\n"//前边减了多少，加上栈，现在增加多少，我几乎不用栈，只需要增加push的即可
+				//参数已经压栈
 				<<"\tpushl\t$.LC"<<strlist[p->str_val]<<endl
 				<<"\tcall\tprintf\n"
-				<<"\taddl\t$16, %esp\n"
+				<<"\taddl\t$"<<num_i*4+4<<", %esp\n"
 				<<endl;
 			}
 		}
@@ -918,6 +1051,63 @@ void TreeNode::stmt_gen_code(TreeNode *t)
 			label_index+=1;
 		
 	}
+	else if(t_type==STMT_IF_ELSE_IF)//if e1 b1 e2 b2 e3 b3  b4
+	{					  			//  
+		TreeNode*e1,*e2,*e3,*b1,*b2,*b3;//...
+		//至少e1 e2 e3
+		e1=p;e2=e1->sibling;e3=e2->sibling;b1=e1->child;b2=e2->child;b3=e3->child;
+		TreeNode* a[20]={e1,e1,e2,e3},*b[20]={b1,b1,b2,b3};
+		int num_i=3;
+		TreeNode* m=e3->sibling;
+		while(m!=nullptr)
+		{
+			num_i++;
+			a[num_i]=m;b[num_i]=m->child;// 4 5 6...
+			m=m->sibling;
+		}
+		//要防止多标签混乱！！！！
+		int static_index=label_index;
+		for (int i = 1; i < num_i; i++)
+		{
+			cout<<".Lif"<<static_index+i-1<<":\n";//    ---------L0:
+			expr_gen_code(a[i]);
+			cout<<"\ttestl\t%eax, %eax\n"//   
+			<<"\tje\t.Lif"<<static_index+i<<"\n";//   ------------if(e1==0)  jmp L1 (e2)    
+			
+			recursive_gen_code(b[i]);//    -----------stmt1
+			cout<<"\tjmp\t.Lif"<<static_index+num_i<<endl;//jmp end:L3  假设 只有e1 e2 e3
+		}
+		//else:
+		cout<<".Lif"<<static_index+num_i-1<<":\n";
+		recursive_gen_code(b[num_i]);//    -----------
+
+		cout<<".Lif"<<static_index+num_i<<":\n";
+
+		label_index=label_index+num_i+1;
+			#if 0
+					// //******************************************
+					// 		expr_gen_code(e1);
+					// 		cout<<"\ttestl\t%eax, %eax\n"//   
+					// 		<<"\tje\t.Lif"<<label_index+1<<"\n";//   ------------if(e1==0)  jmp L2 (e2)    
+							
+					// 		recursive_gen_code(b1);//    -----------stmt1
+					// 		cout<<"\tjmp\t.Lif"<<num_end<<endl;//jmp end
+					// //******************************************
+					// 		cout<<".Lif"<<label_index+1<<":\n";//    ---------L2:
+					// 		expr_gen_code(e2);
+					// 		cout<<"\ttestl\t%eax, %eax\n"//   
+					// 		<<"\tje\t.Lif"<<label_index+2<<"\n";// -----if e2==0 jmp L3
+							
+					// 		recursive_gen_code(b2);//    -----------stmt2
+					// 		cout<<"\tjmp\t.Lif"<<num_end<<endl;//jmp end
+					// //******************************************
+					// 		cout<<".Lif"<<label_index+2<<":\n";//    ---------L2:
+					// 		recursive_gen_code(b3);//    -----------stmt2
+							
+					// //******************************************
+			#endif
+		
+	}
 	else if(t_type==STMT_WHILE)//while expr stmt or while expr block->(...)
 	{					  //       t    p            t    p    
 		/****************表达式,获得%eax即可,然后看是不是0***********************************/
@@ -989,7 +1179,7 @@ void TreeNode::recursive_gen_code(TreeNode *t,bool only_once=0)//only_once用于
 		f=0;
 	}
 	else return;
-	if(f)
+	if(f)//如果自己是句子或者表达式，那么就不递归到孩子
 	if(t->child!=nullptr)
 	recursive_gen_code(t->child);
 
@@ -1031,332 +1221,3 @@ void TreeNode::gen_code()//root调用
 	<<"\t.size\tmain, .-main\n\n";//-----
 
 }
-
-
-
-
-
-void TreeNode::stmt_get_label(TreeNode *t)//set_data_seg_AND_get_label
-{
-	if (t->stmt_type == STMT_DECL_V)//可能要作用域？？
-	{
-		if(t->child->type->type==VALUE_INT)
-		{
-			TreeNode* p=t->child->child;///int a,b,c=1;
-			cout<<".data"<<endl;	//   t     p  
-			while (p!=nullptr)
-			{
-				if(p->child!=nullptr)//int a=1;
-				{
-					cout<<"\t.align 4\n"//int 4   char 1 
-					<<"\t.type\t"<<p->var_name<<", @object\n"
-					<<"\t.size\t"<<p->var_name<<", 4\n"
-					<<p->var_name<<":\n"
-					<<"\t.long\t"<<p->child->int_val<<endl
-					<<endl;
-
-				}
-				else//int a; default=0
-				{
-					cout<<"\t.align 4\n"//int 4   char 1 
-					<<"\t.type\t"<<p->var_name<<", @object\n"
-					<<"\t.size\t"<<p->var_name<<", 4\n"
-					<<p->var_name<<":\n"
-					<<"\t.long\t"<<0<<endl
-					<<endl;
-
-				}
-				p=p->sibling;
-
-			}
-		}
-		else if(t->child->type->type==VALUE_CHAR)
-		{
-			TreeNode* p=t->child->child;///char
-			cout<<".data"<<endl;	//  
-			while (p!=nullptr)
-			{
-				if(p->child!=nullptr)
-				{
-					cout<<"\t.align 1\n"
-					<<"\t.type\t"<<p->var_name<<", @object\n"
-					<<"\t.size\t"<<p->var_name<<", 1\n"
-					<<p->var_name<<":\n"
-					<<"\t.long\t"<<int(p->child->ch_val)<<endl
-					<<endl;
-
-				}
-				else//int a; default=0
-				{
-					cout<<"\t.align 1\n"//int 4   char 1 
-					<<"\t.type\t"<<p->var_name<<", @object\n"
-					<<"\t.size\t"<<p->var_name<<", 1\n"
-					<<p->var_name<<":\n"
-					<<"\t.long\t"<<0<<endl
-					<<endl;
-
-				}
-				p=p->sibling;
-				/*
-					movb	$97, t
-
-					movzbl	s, %eax
-					movsbl	%al, %eax
-					subl	$12, %esp
-					pushl	%eax
-					call	putchar
-					addl	$16, %esp
-					*/
-			}
-		}
-		else;
-		
-	}
-	else if (t->stmt_type == STMT_ASSIGN)
-	{
-		// if (t->label.begin != "")
-		// 	cout << t->label.begin << ":" << endl;
-		// recursive_gen_code(cout, t->children[0]);
-		// recursive_gen_code(cout, t->children[1]);
-		// cout << "\tjmp " << t->label.begin << endl;
-	}
-	else if (t->stmt_type == STMT_PRINTF)
-	{
-		TreeNode *p = t->child;
-		//cout << ".section	.rodata\n";
-		while (p != nullptr&&p->nodeType==NODE_CONST)//printf("%d",12)
-		{
-			if(strlist.count(p->str_val)==0)
-			{
-				strlist[p->str_val] = strindex;
-				// cout << ".LC"<<strindex++<<":\n\t.string\t" << 
-				// p->str_val << "\n" << endl;
-				rodata[ro_i++]=".LC"+to_string(strindex++)+string(":\n\t.string\t") +
-				p->str_val + "\n";
-				
-			}
-			p = p->sibling;
-		}
-	}
-	else if (t->stmt_type == STMT_SCANF)
-	{
-		TreeNode *p = t->child;
-		// cout << ".section	.rodata\n";
-		while (p != nullptr&&p->nodeType==NODE_CONST)//printf("%d",12)
-		{
-			if(strlist.count(p->str_val)==0)
-			{
-				strlist[p->str_val] = strindex;
-				rodata[ro_i++]=".LC"+to_string(strindex++)+string(":\n\t.string\t") +
-				p->str_val + "\n" ;
-			}
-			p = p->sibling;
-		}
-	}
-	else
-	{
-		;
-	}
-}
-void TreeNode::recursive_get_label(TreeNode *t)
-{
-	if(t==nullptr)
-		return;
-	if (t->nodeType == NODE_STMT)
-	{
-		stmt_get_label(t);
-	}
-		
-	else if (t->nodeType == NODE_EXPR)
-		;//expr_get_label(t);
-	else;
-	TreeNode* p=t->child;
-	while(p!=nullptr)
-	{
-		//if  ! stmt || ! expr
-		recursive_get_label(p);
-		p=p->sibling;
-	}
-	
-}
-
-
-
-void TreeNode::get_label()//root call it 
-{
-	// this->label.begin = "_start";
-	TreeNode* p=this->child;
-	while (p!=nullptr)
-	{
-		recursive_get_label(p);
-		p=p->sibling;//root's children
-	}
-
-	cout << ".section	.rodata\n";//printf()???
-	for (int i = 0; i < ro_i; i++)
-	{
-		cout<<rodata[i];
-	}
-	
-	
-}
-
-#if 0
-
-//静态全局变量
-string TreeNode::new_label()
-{
-	char tmp[20];
-
-	sprintf(tmp, "@%d", TreeNode::label_seq);
-	TreeNode::label_seq++;
-	return tmp;
-}
-void TreeNode::expr_get_label(TreeNode *t)
-	{
-		if (t->val_type_flag != 'b')
-			return;
-
-		TreeNode *e1 = t->child;
-		TreeNode *e2;
-		if (t->child->sibling != nullptr)
-			e2 = t->child->sibling;
-		switch (t->op_type)
-		{
-			case OP_AND:
-				e1->label._true = new_label();
-				e1->label._false = t->label._false;
-
-				e2->label._true = t->label._true;
-				e2->label._false = t->label._false;
-				// e1->label._false = e2->label._false = t->label._false;
-				break;
-				/**
-				 t: e1  e2
-
-					e1.1=newlabel 不知道
-				t.1:==e2.1:
-				t.0:==e1.0==e2.0
-				* */
-
-			case OP_OR:
-				e1->label._false = new_label();
-				e1->label._true = t->label._true;
-
-				e2->label._true = t->label._true;
-				e2->label._false = t->label._false;
-				break;
-			
-			case OP_NOT:
-				e1->label._true = t->label._false;
-				e1->label._false = t->label._true;
-				break;
-
-			// case OP_EQ:
-			// case OP_NOT_EQ:
-			// case OP_MORE_EQ:
-			// case OP_MORE_THAN:
-			// case OP_LESS_EQ:
-			// case OP_LESS_THAN:
-			default:
-				cout << "error" << endl;
-				break;
-			}
-		if (e1)
-			recursive_get_label(e1);
-		if (e2)
-			recursive_get_label(e2);
-	}
-
-
-
-
-	void TreeNode::get_temp_var(TreeNode *t)
-	{
-		if (t->kind != EXPR_NODE)
-			return;
-		if (t->attr.op < PLUS || t->attr.op > OVER)
-			return;
-
-		TreeNode *arg1 = t->children[0];
-		TreeNode *arg2 = t->children[1];
-
-		if (arg1->nodeType == OP_EXPR)
-			temp_var_seq--;
-		if (arg2 && arg2->nodeType == OP_EXPR)
-			TreeNode::temp_var_seq--;
-		t->temp_var = TreeNode::temp_var_seq;
-		TreeNode::temp_var_seq++;
-	}
-
-	TreeNode* TreeNode::NewRoot(int kind, int nodeType, NodeAttr attr, int type,
-					TreeNode *child1, TreeNode *child2, TreeNode *child3, TreeNode *child4)
-	{
-		TreeNode *t = new TreeNode;
-		
-		if (NULL == t)
-			cerr << "Out of memory at line %d\n" << lineno;
-		else
-		{
-			t->kind = kind;
-			t->nodeType = nodeType;
-			t->attr = attr;
-			t->type = type;
-			t->children[0] = child1;
-			t->children[1] = child2;
-			t->children[2] = child3;
-			t->children[3] = child4;
-			t->lineno = lineno;
-			t->seq = TreeNode::node_seq++;
-			t->sibling = NULL;
-			t->label.begin = "";
-			t->label.next = "";
-			t->label._true = "";
-			t->label._false = "";
-			root = t;
-			type_check(t); // type check
-			get_temp_var(t); // generate temp veriables
-		}
-		return t;
-	}
-
-	
-
-
-
-	//表达式类型为'b':打标签   注意我的类型这里是用val_type_flag  不是type
-	
-
-
-
-
-
-
-	void TreeNode::gen_decl( TreeNode *t)
-	{
-		cout << endl << "# define your veriables and temp veriables here" << endl;
-		cout << "\t.bss" << endl;
-		for (; t->kind == DECL_NODE; t = t->sibling)
-		{
-			for (TreeNode *p = t->children[1]; p; p = p->sibling)
-				if (p->type == Integer)
-					cout << "_" << symtbl.getname(p->attr.symtbl_seq) << ":" << endl;
-					cout << "\t.zero\t4" << endl;
-					cout << "\t.align\t4" << endl;
-		}
-		
-		for (int i = 0; i < temp_var_seq; i++)
-		{
-			cout << "t" <<  i << ":" << endl;
-			cout << "\t.zero\t4" << endl;
-			cout << "\t.align\t4" << endl;
-		}
-	}
-
-
-
-
-
-
-
-#endif

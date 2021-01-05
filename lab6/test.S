@@ -6,9 +6,17 @@
 	.size	help_me, 4
 help_me:
 	.zero	4
+	.globl	help
+	.align 4
+	.type	help, @object
+	.size	help, 4
+help:
+	.zero	4
 	.section	.rodata
 .LC0:
-	.string	"test:%d %d\n"
+	.string	"True!%d\n"
+.LC1:
+	.string	"False!%d\n"
 	.text
 	.globl	main
 	.type	main, @function
@@ -21,22 +29,22 @@ main:
 	movl	%esp, %ebp
 	pushl	%ecx
 	subl	$20, %esp
-	movl	$-100020, -24(%ebp)
-	movl	$-3, -20(%ebp)
-	movl	-24(%ebp), %eax
-	cltd
-	idivl	-20(%ebp)
-	movl	%eax, -16(%ebp)
-	movl	-24(%ebp), %eax
-	cltd
-	idivl	-20(%ebp)
-	movl	%edx, -12(%ebp)
-	subl	$4, %esp
+	movl	$-1, -12(%ebp)
+	cmpl	$-1, -12(%ebp)
+	jne	.L2
+	subl	$8, %esp
 	pushl	-12(%ebp)
-	pushl	-16(%ebp)
 	pushl	$.LC0
 	call	printf
 	addl	$16, %esp
+	jmp	.L3
+.L2:
+	subl	$8, %esp
+	pushl	-12(%ebp)
+	pushl	$.LC1
+	call	printf
+	addl	$16, %esp
+.L3:
 	movl	$0, %eax
 	movl	-4(%ebp), %ecx
 	leave

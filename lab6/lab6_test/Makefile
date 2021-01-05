@@ -1,7 +1,8 @@
 .PHONY:clean clean-complete type std all run different
 all:run
 run:
-	./test.out --level 1
+	#-------------------------
+	./test.out --level 2
 	#--------------------------
 arm-run:
 	./test.out --target arm

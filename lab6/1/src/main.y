@@ -23,7 +23,7 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
             if(t->child->val_type_flag=='i')
             {
                 /***************************type trans*********************************/
-                cerr <<t->lineno<<" : if/while stmt:the expr should be bool type.   type trans!!! int-->bool"<<endl;
+                cout <<t->lineno<<" : if/while stmt:the expr should be bool type.   type trans!!! int-->bool"<<endl;
                 t->child->val_type_flag == 'b';//??????
             }
             else if(t->child->val_type_flag=='b')
@@ -32,7 +32,7 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
             }
             else
             {
-                cerr <<t->child->lineno<<" : type error!   if/while stmt:the expr should be bool type!" << endl;
+                cout <<t->child->lineno<<" : type error!   if/while stmt:the expr should be bool type!" << endl;
             }
         /************************TYPE_CHECK*****************************/
     }
@@ -41,7 +41,7 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
             if(t->child->sibling->val_type_flag=='i')//child2(for 的 expr2)
             {
                 /***************************type trans*********************************/
-                cerr <<t->lineno<<" : for stmt:the expr2 should be bool type.\ntype trans!!! int-->bool"<<endl;
+                cout <<t->lineno<<" : for stmt:the expr2 should be bool type.\ntype trans!!! int-->bool"<<endl;
                 t->child->sibling->val_type_flag == 'b';//??????
             }
             else if(t->child->sibling->val_type_flag=='b')
@@ -50,7 +50,7 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
             }
             else
             {
-                cerr <<t->child->lineno<<" : type error!"<<endl<<
+                cout <<t->child->lineno<<" : type error!"<<endl<<
                 "for stmt:the expr2 should be bool type!" << endl;
             }
     }
@@ -67,7 +67,7 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
         }
         else
         {
-            cerr <<t->lineno<<" : "<<t->var_name<<" :redecl error!"<<endl;
+            cout <<t->lineno<<" : "<<t->var_name<<" :redecl error!"<<endl;
         }
     }
     //nodecl未声明    并且对合法的ID 对应到符号表！！
@@ -88,13 +88,13 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
                 p=p->father;
                 
             }
-            cerr <<t->lineno<<" : "<<t->var_name<<" :no decl error!"<<endl;
+            cout <<t->lineno<<" : "<<t->var_name<<" :no decl error!"<<endl;
             //cout<<cur_table->scope<<endl;
         }
         else//对应到符号表！！
         {
             //t=cur_table->nodemap[t->var_name];//似乎不行  怎么深拷贝？？？
-            //cerr<<"对应到符号表！！"<<t->val_type_flag;
+            //cout<<"对应到符号表！！"<<t->val_type_flag;
             t->val_type_flag=cur_table->nodemap[t->var_name]->val_type_flag;
         }
     }
@@ -104,14 +104,14 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
     {
         if(t->child->val_type_flag!='i'||t->child->sibling->val_type_flag!='i')
         {
-            cerr <<t->lineno<<" : calculation type error! expect \"int\"!!!"<<endl;
+            cout <<t->lineno<<" : calculation type error! expect \"int\"!!!"<<endl;
         }
     }
     void check_CAL_math_negtivenum(TreeNode* t)
     {
         if(t->child->val_type_flag!='i')
         {
-            cerr <<t->lineno<<" : math calculation type error! expect \"int\"!!!"<<endl;
+            cout <<t->lineno<<" : math calculation type error! expect \"int\"!!!"<<endl;
         }
     }
 
@@ -120,14 +120,14 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
         if(t->child->val_type_flag=='s'||t->child->val_type_flag=='c'||t->child->sibling->val_type_flag=='s'||t->child->sibling->val_type_flag=='c')
         //int bool  可以  string char 不可以 进行逻辑运算
         {
-            cerr <<t->lineno<<" : logical calculation type error! expect \"int\" or \"bool\"!!!"<<endl;
+            cout <<t->lineno<<" : logical calculation type error! expect \"int\" or \"bool\"!!!"<<endl;
         }
     }
     void check_CAL_logical_not(TreeNode* t)
     {
         if(t->child->val_type_flag=='s'||t->child->val_type_flag=='c')//int bool  可以  string char 不可以 进行逻辑运算
         {
-            cerr <<t->lineno<<" : logical calculation type error! expect \"int\" or \"bool\"!!!"<<endl;
+            cout <<t->lineno<<" : logical calculation type error! expect \"int\" or \"bool\"!!!"<<endl;
         }
     }
 
@@ -140,21 +140,21 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
         {
             if(t->val_type_flag!='i')
             {
-                cerr <<t->lineno<<" : assign type error! expect \"int\"!!!"<<endl;
+                cout <<t->lineno<<" : assign type error! expect \"int\"!!!"<<endl;
             }
         }
         else if(t->father->father->type==TYPE_STRING)
         {
             if(t->val_type_flag!='s')
             {
-                cerr <<t->lineno<<" : assign type error! expect \"string\"!!!"<<endl;
+                cout <<t->lineno<<" : assign type error! expect \"string\"!!!"<<endl;
             }
         }
         else if(t->father->father->type==TYPE_CHAR)
         {
             if(t->val_type_flag!='c')
             {
-                cerr <<t->lineno<<" : assign type error! expect \"char\"!!!"<<endl;
+                cout <<t->lineno<<" : assign type error! expect \"char\"!!!"<<endl;
             }
         }
         else if(t->father->father->type==TYPE_BOOL)
@@ -162,11 +162,11 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
             if(t->val_type_flag!='b')
             {
                 if(t->val_type_flag!='i')
-                {cerr <<t->lineno<<" : assign type error! expect \"bool\"!!!"<<endl;}
+                {cout <<t->lineno<<" : assign type error! expect \"bool\"!!!"<<endl;}
                 else
                 {
                     /***************************type trans*********************************/
-                    cerr <<t->lineno<<" : type trans!!! int-->bool"<<endl;
+                    cout <<t->lineno<<" : type trans!!! int-->bool"<<endl;
                     t->val_type_flag='b';
                 }
             }
@@ -174,26 +174,26 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
     }
     void check_assign_type(TreeNode* t)//a = 1; a和1是兄弟关系  但这个a是归约得到ID，需要在符号表对应到定义的a
     {
-        // cerr<<t->val_type_flag<<endl;
+        // cout<<t->val_type_flag<<endl;
         if(t->val_type_flag=='i')
         {
             if(t->sibling->val_type_flag!='i')
             {
-                cerr <<t->lineno<<" : assign type error! expect \"int\"!!!"<<endl;
+                cout <<t->lineno<<" : assign type error! expect \"int\"!!!"<<endl;
             }
         }
         else if(t->val_type_flag=='c')
         {
             if(t->sibling->val_type_flag!='c')
             {
-                cerr <<t->lineno<<" : assign type error! expect \"char\"!!!"<<endl;
+                cout <<t->lineno<<" : assign type error! expect \"char\"!!!"<<endl;
             }
         }
         else if(t->val_type_flag=='s')
         {
             if(t->sibling->val_type_flag!='s')
             {
-                cerr <<t->lineno<<" : assign type error! expect \"string\"!!!"<<endl;
+                cout <<t->lineno<<" : assign type error! expect \"string\"!!!"<<endl;
             }
         }
         else if(t->val_type_flag=='b')
@@ -201,11 +201,11 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
             if(t->sibling->val_type_flag!='b')
             {
                 if(t->sibling->val_type_flag!='i')
-                {cerr <<t->lineno<<" : assign type error! expect \"bool\"!!!"<<endl;}
+                {cout <<t->lineno<<" : assign type error! expect \"bool\"!!!"<<endl;}
                 else
                 {
                     /***************************type trans*********************************/
-                    cerr <<t->lineno<<" : type trans!!! int-->bool"<<endl;
+                    cout <<t->lineno<<" : type trans!!! int-->bool"<<endl;
                     t->sibling->val_type_flag='b';
                 }
             }
@@ -227,13 +227,13 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
         // {
         //     t->ch_val=char(t->int_val);
         //     t->val_type_flag='c';
-        //     cerr <<t->child->lineno<< "type check：int转换为char" << endl;
+        //     cout <<t->child->lineno<< "type check：int转换为char" << endl;
         // }
         // if(ValType_name[t->father->type->type]=="bool"&&t->val_type_flag!='b')
         // {
         //     t->b_val=bool(t->int_val)||bool(t->ch_val);
         //     t->val_type_flag='b';
-        //     cerr <<t->child->lineno<< "type check：转换为bool" << endl;
+        //     cout <<t->child->lineno<< "type check：转换为bool" << endl;
         // }
     }
 //-----------------------------------
@@ -344,6 +344,7 @@ CompUnit:
 
 Func_Def:
     Type MAIN LPAREN RPAREN LBRACE fake_1 statements RBRACE {
+        //cout<<"FUNC!!!\n";
         $$ = new TreeNode(0, NODE_FUNC); 
         $$->addChild($7);
         
@@ -850,30 +851,7 @@ I_expr:
     }
     ;
 if_else_while_for_stmt:
-    IF LPAREN expr RPAREN statement {
-        // cout<<"if !!"<<endl;
-        //这里不能用$1,要么直接lineno 要么$3->lineno
-
-        //if ( expr ) stmt 
-        $$ = new TreeNode($3->lineno, NODE_STMT);
-        $$->stmt_type=STMT_IF;
-        $$->addChild($3);
-        $$->addChild($5);
-
-        /************************TYPE_CHECK*****************************/
-        check_control_stmt($$);
-    }
-    |IF LPAREN expr RPAREN  statement  ELSE  statement  {
-        //if  expr  stmt1  stmt2
-        $$ = new TreeNode($3->lineno, NODE_STMT);
-        $$->stmt_type=STMT_IF_ELSE;
-
-        $$->addChild($3);
-        $$->addChild($5);
-        $$->addChild($7);
-
-        check_control_stmt($$);
-    }
+    if_else_stmt{$$=$1;}
     | WHILE LPAREN expr RPAREN statement {
         //while expr stmt
         $$ = new TreeNode($3->lineno, NODE_STMT);
@@ -897,6 +875,109 @@ if_else_while_for_stmt:
         }
     ;
 
+    if_else_stmt:
+    IF LPAREN expr RPAREN statement {
+        // cout<<"if !!"<<endl;
+        //这里不能用$1,要么直接lineno 要么$3->lineno
+
+        //if ( expr ) stmt 
+        $$ = new TreeNode($1->lineno, NODE_STMT);
+        $$->stmt_type=STMT_IF;
+        $$->addChild($3);
+
+        if($5->nodeType!=NODE_BLOCK)
+        {
+            TreeNode* t = new TreeNode($5->lineno, NODE_BLOCK);
+            t->addChild($5);
+            $$->addChild(t);
+        }
+        else
+            $$->addChild($5);
+
+        /************************TYPE_CHECK*****************************/
+        check_control_stmt($$);
+    }
+    |IF LPAREN expr RPAREN  statement  ELSE  statement  {
+        //if  expr  stmt1  stmt2
+        $$ = new TreeNode($1->lineno, NODE_STMT);
+        $$->stmt_type=STMT_IF_ELSE;
+
+        $$->addChild($3);
+        if($5->nodeType!=NODE_BLOCK)
+        {
+            TreeNode* t = new TreeNode($5->lineno, NODE_BLOCK);
+            t->addChild($5);
+            $$->addChild(t);
+        }
+        else
+            $$->addChild($5);
+        if($7->nodeType!=NODE_BLOCK)
+        {
+            TreeNode* t = new TreeNode($7->lineno, NODE_BLOCK);
+            t->addChild($7);
+            $$->addChild(t);
+        }
+        else 
+            $$->addChild($7);
+
+        check_control_stmt($$);
+    }
+    | if_else_if ELSE statement {
+        $$=$1;
+        //给else也加个头节点
+        TreeNode* else_block = new TreeNode($3->lineno, NODE_BLOCK);
+        $$->addChild(else_block);
+        if($3->nodeType!=NODE_BLOCK)
+        {
+            TreeNode* t = new TreeNode($3->lineno, NODE_BLOCK);
+            t->addChild($3);
+            else_block->addChild(t);
+        }
+        else
+            else_block->addChild($3);
+    };
+
+        if_else_if:
+        IF LPAREN expr RPAREN statement ELSE_IF LPAREN expr RPAREN statement {
+            $$ = new TreeNode($3->lineno, NODE_STMT);
+            $$->stmt_type=STMT_IF_ELSE_IF;
+
+            $$->addChild($3);
+            if($5->nodeType!=NODE_BLOCK)
+            {
+                TreeNode* t = new TreeNode($5->lineno, NODE_BLOCK);
+                t->addChild($5);
+                $3->addChild(t);
+            }
+            else
+                $3->addChild($5);
+
+            $$->addChild($8);
+            if($10->nodeType!=NODE_BLOCK)
+            {
+                TreeNode* t = new TreeNode($10->lineno, NODE_BLOCK);
+                t->addChild($10);
+                $8->addChild(t);
+            }
+            else
+                $8->addChild($10);
+        }
+        | if_else_if ELSE_IF LPAREN expr RPAREN statement{
+            $$=$1;
+
+            $$->addChild($4);
+
+            if($6->nodeType!=NODE_BLOCK)
+            {
+                TreeNode* t = new TreeNode($6->lineno, NODE_BLOCK);
+                t->addChild($6);
+                $4->addChild(t);
+            }
+            else
+                $4->addChild($6);
+
+        }
+        ;
 
 
 
