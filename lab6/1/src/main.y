@@ -12,6 +12,8 @@ int yyerror( char const * );
 SymTable *cur_table;
 int scopeid=-1,n_top=1;
 string ValType_name[20] = {"bool", "int", "char", "string","void","const int","const char","9"};//对应enum ValueType
+//array:
+int ele_num;
 //-------------
 
 //类型错误检查（比如字符串、布尔值不能参与某些运算、输入输出函数也有参数类型要求）
@@ -259,7 +261,7 @@ string ValType_name[20] = {"bool", "int", "char", "string","void","const int","c
     //ID  integer(16 10 8 2) char bool string 字符 数字 标识符 字符串 等等
     %token IDENTIFIER INTEGER_H INTEGER_D INTEGER_O INTEGER_B CHAR BOOL STRING
     // 关键字 main return for  printf  scanf  while  if else "else if"
-    %token MAIN RETURN FOR WHILE IF ELSE ELSE_IF PRINTF SCANF
+    %token MAIN RETURN FOR WHILE IF ELSE ELSE_IF PRINTF SCANF BREAK CONTINUE
 
     //!!!后定义的优先级高！！！ 
     // = += -= *= /=
@@ -698,32 +700,10 @@ decl_stmt:
             cout <<$$->lineno<<" : 引用的变量未定义！！！"<<endl;
         }
     }
-
-
-    | Type ARRAY ASSIGN arr_assign_expr  {
-        $$ = new TreeNode($1->lineno, NODE_STMT);
-        $$->stmt_type = STMT_DECL_A;
-        $$->addChild($1);
-        $1->addChild($2);
-        $1->addChild($4);
-
-        //$2->val_type_flag=ValType_name[$2->father->type->type][0];
-        /*************************TYPE__CHECK************************************/
-        check_decl($2);
-
-    } 
-    | Type ARRAY {
-        $$ = new TreeNode($1->lineno, NODE_STMT);
-        $$->stmt_type = STMT_DECL_A;
-
-        $$->addChild($1);
-        $1->addChild($2);
-
-        /*************************TYPE__CHECK************************************/
-        check_decl($2);
-
-    } 
+    | array_decl {$$=$1;}
     ;
+
+    
 
 assign_stmt:
     base_assign_stmt{$$=$1;}
@@ -1006,6 +986,51 @@ INT_CONST:
     | INTEGER_B {$$=$1;}
     ;
 
+
+array_decl:
+     Type ARRAY ASSIGN arr_assign_expr  {
+        $$ = new TreeNode($1->lineno, NODE_STMT);
+        $$->stmt_type = STMT_DECL_A;
+        $$->addChild($1);
+        $1->addChild($2);
+        $2->arr_len=$2->child->int_val;
+        $2->init_len=ele_num;//ele_num:实际初始化的元素数量
+        // cout<<$2->init_len<<" "<<$2->arr_len<<endl;
+
+        TreeNode* t=$4->child;
+        int i=ele_num-1;
+        while(i--)
+        {
+            t=t->sibling;
+        }
+        //这样很浪费空间，先这样吧,先只支持int
+        while(ele_num<$2->child->int_val)
+        {
+            TreeNode* tmp=new TreeNode($4->lineno,NODE_CONST);
+            t->child=tmp;
+            t=tmp;
+            ele_num++;
+            t->int_val=0;
+        }
+        $2->addChild($4);
+
+        //$2->val_type_flag=ValType_name[$2->father->type->type][0];
+        /*************************TYPE__CHECK************************************/
+        check_decl($2);
+
+    } 
+    | Type ARRAY {
+        $$ = new TreeNode($1->lineno, NODE_STMT);
+        $$->stmt_type = STMT_DECL_A;
+
+        $$->addChild($1);
+        $1->addChild($2);
+
+        /*************************TYPE__CHECK************************************/
+        check_decl($2);
+
+    } 
+    ;
 ARRAY:
     IDENTIFIER LMPAREN INTEGER_D RMPAREN{
         $$=$1;
@@ -1022,12 +1047,14 @@ arr_assign_expr:
     ;
 arr_element:
     arr_ele{
+        ele_num=1;
         $$ = new TreeNode($1->lineno, NODE_STMT);//???
         $$->addChild($1);
 
     }
     | arr_element COMMA arr_ele {
         $$->addChild($3);
+        ele_num++;
     }
     ;
 
@@ -1040,6 +1067,11 @@ arr_ele:
 
 ID:
     IDENTIFIER{$$=$1;}
+    | IDENTIFIER LMPAREN INTEGER_D RMPAREN{
+        $$=$1;
+        $$->nodeType=NODE_ARR;
+        $$->index=$3->int_val;
+    }
     ;
     
     

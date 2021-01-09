@@ -12,11 +12,19 @@ help_me:
 	.size	help, 4
 help:
 	.zero	4
+	.globl	a
+	.data
+	.align 4
+	.type	a, @object
+	.size	a, 20
+a:
+	.long	1
+	.long	2
+	.long	3
+	.zero	8
 	.section	.rodata
 .LC0:
-	.string	"True!%d\n"
-.LC1:
-	.string	"False!%d\n"
+	.string	"%d"
 	.text
 	.globl	main
 	.type	main, @function
@@ -28,23 +36,13 @@ main:
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ecx
-	subl	$20, %esp
-	movl	$-1, -12(%ebp)
-	cmpl	$-1, -12(%ebp)
-	jne	.L2
+	subl	$4, %esp
+	movl	a+8, %eax
 	subl	$8, %esp
-	pushl	-12(%ebp)
+	pushl	%eax
 	pushl	$.LC0
 	call	printf
 	addl	$16, %esp
-	jmp	.L3
-.L2:
-	subl	$8, %esp
-	pushl	-12(%ebp)
-	pushl	$.LC1
-	call	printf
-	addl	$16, %esp
-.L3:
 	movl	$0, %eax
 	movl	-4(%ebp), %ecx
 	leave

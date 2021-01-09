@@ -98,15 +98,17 @@ extern int yydebug;
     ELSE_IF = 308,
     PRINTF = 309,
     SCANF = 310,
-    b_OR = 311,
-    b_NOR = 312,
-    b_AND = 313,
-    UMINUS = 314,
-    b_NOT = 315,
-    pre_SELF_ADD = 316,
-    pre_SELF_SUB = 317,
-    GET_ADDRESS = 318,
-    POINTER = 319
+    BREAK = 311,
+    CONTINUE = 312,
+    b_OR = 313,
+    b_NOR = 314,
+    b_AND = 315,
+    UMINUS = 316,
+    b_NOT = 317,
+    pre_SELF_ADD = 318,
+    pre_SELF_SUB = 319,
+    GET_ADDRESS = 320,
+    POINTER = 321
   };
 #endif
 

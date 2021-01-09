@@ -356,6 +356,70 @@ void TreeNode::stmt_get_label(TreeNode *t)//set_data_seg_AND_get_label
 		// else;
 		
 	}
+	else if (t->stmt_type == STMT_DECL_A)//int a   5   1 2 3 0 0
+	{									//     p          q
+// 			.align 4   int a[5]={1,2,3};
+// 	.type	a, @object
+// 	.size	a, 20
+// a:
+// 	.long	1
+// 	.long	2
+// 	.long	3
+// 	.zero	8
+		if(t->child->type->type==VALUE_INT||t->child->type->type==VALUE_CHAR||t->child->type->type==VALUE_CONST_INT||t->child->type->type==VALUE_CONST_CHAR)
+		{
+			TreeNode* p=t->child->child,*q=p->child->sibling;//!!!!!!!!!!!!!
+			int NUM=p->arr_len,initNUM=p->init_len;
+			
+			while (p!=nullptr)
+			{
+				// if(p->child!=nullptr)//int a=1;
+				// {
+					vardata[var_i]="\t.align 4\n";
+					vardata[var_i]+="\t.type\t"+p->var_name+", @object\n";
+					
+					if(t->child->type->type==VALUE_CONST_INT||t->child->type->type==VALUE_INT)
+					{
+						vardata[var_i]+="\t.size\t"+p->var_name+", "+to_string(NUM*4)+"\n";
+					}
+					else //if(t->child->type->type==VALUE_CONST_CHAR||t->child->type->type==VALUE_CHAR)
+					{
+						vardata[var_i]+="\t.size\t"+p->var_name+", "+to_string(NUM*1)+"\n";
+					}
+					
+					vardata[var_i]+=p->var_name+":\n";
+
+					TreeNode* m=q->child;
+					for (int i = 0; i < initNUM; i++)
+					{
+						vardata[var_i]+="\t.long\t"+to_string(m->int_val)+"\n";
+						if(m->sibling!=nullptr)
+							m=m->sibling;
+					}
+					if(NUM-initNUM>0)
+						if(t->child->type->type==VALUE_CONST_INT||t->child->type->type==VALUE_INT)
+							vardata[var_i]+="\t.zero\t"+to_string((NUM-initNUM)*4)+"\n";
+						else 
+							vardata[var_i]+="\t.zero\t"+to_string((NUM-initNUM)*1)+"\n";
+			
+					var_i++;
+				// }
+				// else//int a; default=0
+				// {
+				// 	cout<<"\t.align 4\n"//int 4   char 1 
+				// 	<<"\t.type\t"<<p->var_name<<", @object\n"
+				// 	<<"\t.size\t"<<p->var_name<<", 4\n"
+				// 	<<p->var_name<<":\n"
+				// 	<<"\t.long\t"<<0<<endl
+				// 	<<endl;
+
+				// }
+				p=p->sibling;
+
+			}
+		}
+		
+	}
 	else if (t->stmt_type == STMT_PRINTF)
 	{
 		TreeNode *p = t->child;
@@ -842,6 +906,8 @@ void TreeNode::stmt_gen_code(TreeNode *t)
 				}
 				else if(p->sibling->child->nodeType==NODE_VAR)
 					cout<<"\tmovl\t"<<p->sibling->child->var_name<<",%eax\n";//p->sibling->childs is arg 2,3,4...
+				else if(p->sibling->child->nodeType==NODE_ARR)//=---------------------------------------------------------------------------------------------------------默认int
+					cout<<"\tmovl\t"<<p->sibling->child->var_name<<"+"<<p->sibling->child->index*4<<",%eax\n";//p->sibling->childs is arg 2,3,4...
 				else
 				{
 					return;//error
@@ -864,12 +930,13 @@ void TreeNode::stmt_gen_code(TreeNode *t)
 				TreeNode* tmp,*e1,*e2,*e3,*e4,*e5,*e6;
 				TreeNode* a[20];
 				tmp=p->sibling->child;//e1
-				int num_i=0;
+				int num_i=0,num_ii;
 				while (tmp!=nullptr)
 				{
 					a[++num_i]=tmp;
 					tmp=tmp->sibling;
 				}
+				num_ii=num_i;
 				//num_i 个参数需要输出，从右往左压栈！！！
 				while(num_i)
 				{
@@ -891,7 +958,7 @@ void TreeNode::stmt_gen_code(TreeNode *t)
 				//参数已经压栈
 				<<"\tpushl\t$.LC"<<strlist[p->str_val]<<endl
 				<<"\tcall\tprintf\n"
-				<<"\taddl\t$"<<num_i*4+4<<", %esp\n"
+				<<"\taddl\t$"<<num_ii*4+4<<", %esp\n"
 				<<endl;
 			}
 		}
@@ -900,7 +967,7 @@ void TreeNode::stmt_gen_code(TreeNode *t)
 	}
 	else if(t_type==STMT_SCANF)
 	{
-		if(p->sibling->child->sibling==nullptr)//printf("%d",a)//注意第二个孩子是block
+		if(p->sibling->child->sibling==nullptr)//("%d",a)//注意第二个孩子是block
 		{// esp: -8-->+16
 			cout<<"\tsubl\t$8, %esp\n"//p->sibling->childs is arg 2,3,4...
 			<<"\tpushl\t$"<<p->sibling->child->var_name<<"\n"
@@ -914,9 +981,88 @@ void TreeNode::stmt_gen_code(TreeNode *t)
 			// call	scanf
 			// addl	$16, %esp
 		}
-		else
+		else//(%d %d %d a b c)---------------必须 在栈上分配了！！！！！也不是，直接变量名就行，读入变量！！！
 		{
-			cerr<<err_str;
+				// 		subl	$20, %esp
+				// movl	%gs:20, %eax
+				// movl	%eax, -12(%ebp)
+				// xorl	%eax, %eax
+				// leal	-16(%ebp), %eax
+				// pushl	%eax
+				// leal	-20(%ebp), %eax
+				// pushl	%eax
+				// leal	-24(%ebp), %eax
+				// pushl	%eax
+				// pushl	$.LC0
+				// call	scanf
+				// addl	$16, %esp
+				// movl	-16(%ebp), %ecx
+				// movl	-20(%ebp), %edx
+				// movl	-24(%ebp), %eax
+				// pushl	%ecx
+				// pushl	%edx
+				// pushl	%eax
+				// pushl	$.LC1
+				// call	printf
+				// addl	$16, %esp
+
+		//-----------static-------------
+			// pushl	$_ZL1e
+			// pushl	$_ZL1d
+			// pushl	$_ZL1c
+			// pushl	$_ZL1b
+			// pushl	$_ZL1a
+			// pushl	$.LC0
+			// call	scanf
+
+
+			// addl	$32, %esp
+			// movl	_ZL1e, %esi
+			// movl	_ZL1d, %ebx
+			// movl	_ZL1c, %ecx
+			// movl	_ZL1b, %edx
+			// movl	_ZL1a, %eax
+			// subl	$8, %esp
+
+
+			// pushl	_ZL1e
+			// pushl	_ZL1d
+			// pushl	_ZL1c
+			// pushl	_ZL1b
+			// pushl	_ZL1a
+			// pushl	$.LC1
+			// call	printf
+				TreeNode* tmp,*e1,*e2,*e3,*e4,*e5,*e6;
+				TreeNode* a[20];
+				tmp=p->sibling->child;//e1
+				int num_i=0,num_ii;
+				while (tmp!=nullptr)
+				{
+					a[++num_i]=tmp;
+					tmp=tmp->sibling;
+				}
+				num_ii=num_i;
+				//num_i 个参数需要输出，从右往左压栈！！！
+				while(num_i)
+				{
+					/*if(a[num_i]->nodeType==NODE_EXPR)//printf(.,a+b)
+					{
+						expr_gen_code(a[num_i]);//res is in %eax,don't need to movl!!!
+					}
+					else */if(a[num_i]->nodeType==NODE_VAR)
+						cout<<"\tpushl\t$"<<a[num_i]->var_name<<"\n";//a[num_i]s is arg 2,3,4...
+					else
+						return;//error
+					num_i--;
+				}
+				
+				cout//<<"\tsubl\t$12, %esp\n"//前边减了多少，加上栈，现在增加多少，我几乎不用栈，只需要增加push的即可
+				//参数已经压栈
+				<<"\tpushl\t$.LC"<<strlist[p->str_val]<<endl
+				<<"\tcall\t__isoc99_scanf\n"
+				<<"\taddl\t$"<<num_ii*4+4<<", %esp\n"
+				<<endl;
+			
 		}
 	}
 	else if(t_type==STMT_ASSIGN)
@@ -1005,7 +1151,7 @@ void TreeNode::stmt_gen_code(TreeNode *t)
 		<<"\tidivl\t%ecx\n";//此时商就在%eax了
 
 	}
-	else if(t_type==STMT_DECL_V)//    decl int  a  1   ;四级，只声明只需要get label
+	else if(t_type==STMT_DECL_V)//处理int a=b+c这种    decl int  a  b+1   ;四级，只声明只需要get label
 	{							//对应：t   p    q  q.child
 		TreeNode* q=p->child;//a
 		while (q!=nullptr)
@@ -1152,6 +1298,7 @@ void TreeNode::stmt_gen_code(TreeNode *t)
 		label_index+=2;
 		
 	}
+	else if(t_type==STMT_DECL_A);
 	else
 		cout<<StmtType_name[t_type]<<endl<<"error!!"<<endl;
 	

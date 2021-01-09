@@ -100,7 +100,8 @@ STRING \"([^\".])+\"
 "while" return WHILE;
 "else" return ELSE;
 "else if" return ELSE_IF;
-
+"break" return BREAK;
+"continue" return CONTINUE;
 "printf" return PRINTF;
 "scanf" return SCANF;
 

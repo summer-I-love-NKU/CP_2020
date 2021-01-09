@@ -2,7 +2,7 @@
 all:run
 run:
 	#-------------------------
-	./test.out --level 2
+	./test.out --level 3
 	#--------------------------
 arm-run:
 	./test.out --target arm

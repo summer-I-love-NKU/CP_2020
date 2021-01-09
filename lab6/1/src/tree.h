@@ -89,6 +89,7 @@
             char ch_val;//2
             bool b_val;//3
             string str_val;//4
+            int arr_len,init_len,index;
             int address;//5 pointer指针
 
             char val_type_flag;//'i' 'c' 'b' 's' 'p'  
