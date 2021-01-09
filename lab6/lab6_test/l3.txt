@@ -1,0 +1,44 @@
+./test.out --level 3
+------ Test Info ------
+Target		x86
+Personal Code	False
+Level		3
+Compiler	./main.out
+Error Log	True
+------ Info End  ------
+---Begin Generate Standard Output---
+00_break......Done!
+01_continue......Done!
+02_multi_param_io......Done!
+03_func_1......Done!
+04_func_2......Done!
+05_func_3......Done!
+06_func_4......Done!
+---End Generate Standard Output---
+---Begin Generate Assembly---
+00_break......Failed
+01_continue......Failed
+02_multi_param_io......Done!
+03_func_1......Done!
+04_func_2......Done!
+05_func_3......Done!
+06_func_4......Done!
+---End Generate Assembly---
+---Begin Generate Output---
+00_break......Failed
+01_continue......Failed
+02_multi_param_io......Done!
+03_func_1......Failed
+04_func_2......Failed
+05_func_3......Failed
+06_func_4......Failed
+---End Generate Output---
+---Begin Compare Output---
+00_break......Failed!
+01_continue......Failed!
+02_multi_param_io......OK!
+03_func_1......Failed!
+04_func_2......Failed!
+05_func_3......Failed!
+06_func_4......Failed!
+---End Compare Output---
