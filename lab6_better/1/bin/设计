@@ -1,0 +1,166 @@
+文件：
+
+    tree.h(包括语法树和符号表头文件) type.h   pch.h
+
+    main.l   main.y 
+
+-->main.tab.h/.cpp可能  -->main.cpp   -->main 
+
+
+
+lab5实现语法分析树,检查一下
+
+
+labfinal：
+
+1.gen_label
+2.gen_code
+
+
+
+
+tree.h:   增加nodemap！！
+是否考虑给孩子编号？？
+
+
+
+/**********************************************************************************
+***********************************************************************************
+**********************************************************************************/
+具体设计
+
+a+=1;a++;都归为赋值语句
+1.小问题先不考虑  for(;;)这种  
+
+for(int i=0)作用域这种!!!!!!!!!!
+
+/**********************************************************************************
+***********************************************************************************
+**********************************************************************************/
+
+
+type???转换？？/***************************type trans*********************************/
+
+
+STRING \".+\"    ---->   STRING \"([^\".])+\"
+
+
+变量ID 要记录类型！！！  指针先不考虑
+
+
+
+
+简单的赋值不能实现结构体指针的拷贝？？？？？？
+重写copy构造函数
+https://www.cnblogs.com/weekbo/p/8202754.html
+先释放再分配
+https://www.cnblogs.com/qinguoyi/p/10186219.html
+
+//t=cur_tb->nodemap[t->var_name];//似乎不行  怎么深拷贝？？？
+//cout<<"对应到符号表！！"<<t->val_type_flag;
+t->val_type_flag=cur_tb->nodemap[t->var_name]->val_type_flag;
+
+
+
+
+
+
+CompUnit:
+    CompUnit Func_Def{
+         //root->addChild($2);
+        $$=$1;
+        $$->addChild($2);
+    }
+    | CompUnit statements{
+        //root->addChild($2);
+        $$=$1;
+        $$->addChild($2);
+        cout<<"sss"<<endl;
+    }
+    | Func_Def{
+        root = new TreeNode(0, NODE_PROG);
+        root->addChild($1);
+        $$=root;
+        cout<<"func"<<endl;
+    }
+    | statements{
+        root = new TreeNode(0, NODE_PROG);
+        root->addChild($1);
+        $$=root;
+        cout<<"stmt"<<endl;
+    }
+    |
+    ;
+
+
+    1.产生式问题：
+        S:
+        S a  要写在前面！！！！
+        S b 
+        a 
+        b
+
+    2.main之外的符号表问题，初始化scope==0，因为声明语句都做检查，不初始化会遇到scope不存在，这是符号表里的段错误，不是树的
+    或者不做检查就行
+
+
+    CompUnit:
+    CompUnit Func_Def{
+        // $$=$1;
+        // $$->addChild($2);
+        root->addChild($2);
+    }
+    | CompUnit statements{
+        // $$=$1;
+        // $$->addChild($2);
+        root->addChild($2);
+    }
+    | Func_Def{
+        root = new TreeNode(0, NODE_PROG);
+        root->addChild($1);
+        // $$=root;
+    }
+    | statements{
+        root = new TreeNode(0, NODE_PROG);
+        root->addChild($1);
+        // $$=root;
+    }
+    |
+    ;
+
+
+    syntax error at line 2
+
+
+int a;
+int main(){
+    a=10;
+    printf("test:%d\n",a);
+    return 0;
+}
+
+
+CompUnit:
+    CompUnit Func_Def{
+        $$=$1;
+        $$->addChild($2);
+        // root->addChild($2);
+    }
+    | CompUnit Decl{
+        $$=$1;
+        $$->addChild($2);
+        // root->addChild($2);
+    }
+    | Func_Def{
+        root = new TreeNode(0, NODE_PROG);
+        root->addChild($1);
+        $$=root;
+    }
+    | Decl{
+        root = new TreeNode(0, NODE_PROG);
+        root->addChild($1);
+        $$=root;
+    }
+    ;
+
+    成功！！！为什么！！！？？！！！！！

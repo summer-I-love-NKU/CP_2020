@@ -1,0 +1,52 @@
+./test.out --level 2
+------ Test Info ------
+Target		x86
+Personal Code	False
+Level		2
+Compiler	./main.out
+Error Log	True
+------ Info End  ------
+---Begin Generate Standard Output---
+00_multi_scope......Done!
+01_const......Done!
+02_hex......Done!
+03_oct......Done!
+04_array......Done!
+05_multi_array......Done!
+06_struct......Done!
+07_pointer......Done!
+08_var_assign......Done!
+---End Generate Standard Output---
+---Begin Generate Assembly---
+00_multi_scope......Done!
+01_const......Done!
+02_hex......Done!
+03_oct......Done!
+04_array......Done!
+05_multi_array......Done!
+06_struct......Done!
+07_pointer......Failed
+08_var_assign......Done!
+---End Generate Assembly---
+---Begin Generate Output---
+00_multi_scope......Failed
+01_const......Done!
+02_hex......Done!
+03_oct......Done!
+04_array......Done!
+05_multi_array......Failed
+06_struct......Failed
+07_pointer......Failed
+08_var_assign......Done!
+---End Generate Output---
+---Begin Compare Output---
+00_multi_scope......Failed!
+01_const......OK!
+02_hex......OK!
+03_oct......OK!
+04_array......OK!
+05_multi_array......Failed!
+06_struct......Failed!
+07_pointer......Failed!
+08_var_assign......OK!
+---End Compare Output---

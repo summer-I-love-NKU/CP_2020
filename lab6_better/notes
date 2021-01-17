@@ -1,0 +1,61 @@
+not init static var:
+.local	_ZL1a
+.comm	_ZL1a,4,4
+
+
+
+--------------------------------------
+instructions:
+
+https://blog.csdn.net/weixin_32589873/article/details/78207020
+
+https://www.cnblogs.com/lxgeek/archive/2011/01/01/1923738.html
+
+
+JG   ;有符号大于则跳转
+JNG  ;有符号不大于则跳转
+JGE  ;有符号大于等于则跳转
+JNGE ;有符号不大于等于则跳转
+
+JL   ;有符号小于则跳转
+JNL  ;有符号不小于则跳转
+JLE  ;有符号小于等于则跳转
+JNLE ;有符号不小于等于则跳转
+
+je   Label  等于/零
+
+cmpl	$49, %eax  #eax-49   if(a<50) b=10; else b=20;
+	jg	.L2
+	movl	$10, _ZL1b
+	jmp	.L3
+.L2:
+	movl	$20, _ZL1b
+.L3:
+
+
+cmpl	$5, %eax
+	jle	.L2
+	movl	$10, _ZL1b
+.L2:
+
+
+
+if(a&&b)-------->很棒！！！
+
+movl	_ZL1a, %eax
+	testl	%eax, %eax
+	je	.L2
+	movl	_ZL1b, %eax
+	testl	%eax, %eax
+	je	.L2
+	movl	$10, _ZL1b
+	jmp	.L3
+.L2:
+	movl	$20, _ZL1b
+.L3:
+
+
+test eax,eax 这句意思就是判断eax是否为零
+je xxxxxxxx
+ 
+test指令的操作是将目的操作数和源操作数按位与，运算结果不送回目的操作数，然后根据结果设置SF,ZF,PF标志位，并将CF和OF标志位清零，一般下面会跟跳转，根据ZF标志位是否为零来决定是否跳转，即，

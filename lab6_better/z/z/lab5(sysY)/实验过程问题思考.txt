@@ -1,0 +1,351 @@
+---------------    bug    ----------------------
+
+
+
+
+#-std=c++11:
+    flex --noyywrap -o src/main.lex.yy.cpp  src/main.lex 
+    bison -o src/main.tab.cpp --defines=src/main.tab.h -v src/main.y
+    在这里添加！！！？？？
+    g++ -x c++-header （（（-std=c++11 ）））-o src/pch.h.gch -c src/pch.h
+
+
+
+    In file included from /usr/include/c++/5/unordered_map:35:0,
+                    from src/pch.h:19:
+    /usr/include/c++/5/bits/c++0x_warning.h:32:2: error: #error This file requires compiler and library support for the ISO C++ 2011 standard. This support must be enabled with the -std=c++11 or -std=gnu++11 compiler options.
+    #error This file requires compiler and library support \
+    ^
+    Makefile:14: recipe for target 'src/pch.h.gch' failed
+
+
+不得不在yacc中写入c++代码用于调试！！！
+
+------------------------------------
+line@1  node@3  stmt  children: [ @0 @1 @2 ]  stmt_type:decl
+line@2  node@7  stmt  children: [ @4 @5 @6 ]  stmt_type:decl
+line@3  node@11  stmt  children: [ @8 @9 @10 ]  stmt_type:decl
+root!!!
+line@0  node@12  prog  children: [ @3 @11 ]  error!!!
+Hello!!!!!!!!!!
+root!=NULL
+line@0  node@0  prog  children: [ @3 @11 ]  error!!!
+line@1  node@1  stmt  children: [ @0 @1 @2 ]  stmt_type:decl
+Segmentation fault
+--------------------------------------------------
+
+开始的ID
+line@1  node@3  stmt  children: [ @0 @1 @2 ]  stmt_type: decl
+line@2  node@7  stmt  children: [ @4 @5 @6 ]  stmt_type: decl
+line@3  node@11  stmt  children: [ @8 @9 @10 ]  stmt_type: decl
+root!!!
+line@0  node@12  prog  children: [ @3 @7 @11 ]  
+Hello!!!!!!!!!!
+root!=NULL
+
+边遍历边打印输出，修改后的ID  
+line@0  node@0  prog  children: [ @3 @7 @11 ] （3 7 11还没被修改为 1 5 9） 
+0子结点不为空！！！
+line@1  node@1  stmt  children: [ @0 @1 @2 ]  stmt_type: decl
+1子结点不为空！！！
+Segmentation fault
+Makefile:31: recipe for target 'test' failed
+
+-------
+这次从3 11 变成了3 7 11 
+修改了statements产生式语义动作的处理，不能覆盖了，要伴随指针移动，助教写的有点问题吧？？
+
+所以还是遍历有问题？？
+--------------------------------------------------------------
+line@1  node@3  stmt  children: [ @0 @1 @2 ]  stmt_type: decl
+line@2  node@7  stmt  children: [ @4 @5 @6 ]  stmt_type: decl
+line@3  node@11  stmt  children: [ @8 @9 @10 ]  stmt_type: decl
+root!!!
+line@0  node@12  prog  children: [ @3 @7 @11 ]  
+Hello!!!!!!!!!!
+root!=NULL
+12结点开始打印！！！
+line@0  node@0  prog  children: [ @3 @7 @11 ]  
+0子结点不为空！！！
+3结点开始打印！！！
+line@1  node@1  stmt  children: [ @0 @1 @2 ]  stmt_type: decl
+1子结点不为空！！！
+0结点开始打印！！！------深入到了，然后触发段错误
+Segmentation fault
+
+
+                 0 ->根结点
+        1        5        9   ->三个定义语句
+      2 3 4    6 7 8   10 11 12   ->int a=1;之类的
+
+    所以是深入到了2号结点触发错误
+
+看到了，打印结点信息时printNodeInfo：
+叶子结点呀！！！没有孩子！！！
+//这里别忘了判断条件！！！有无孩子呀！！！
+    if(this->child!=nullptr)
+        this->printChildrenId();
+----------------------------------------
+
+Hello!!!!!!!!!!
+root!=NULL
+line@0  node@0  prog    children: [ @1 @8 @15 ]  
+line@1  node@1  stmt  stmt_type: decl  children: [ @2 @5 @7 ]  
+line@1  node@2  type  type:int  
+line@1  node@3  var  var_name:a  
+line@1  node@4  const  const_type: int const_value: 10    
+line@1  node@5  var  var_name:a  
+line@1  node@6  const  const_type: int const_value: 10    
+line@1  node@7  const  const_type: int const_value: 10    
+line@2  node@8  stmt  stmt_type: decl  children: [ @9 @12 @14 ]  
+line@2  node@9  type  type:int  
+line@2  node@10  var  var_name:b  
+line@2  node@11  const  const_type: int const_value: 11    
+line@2  node@12  var  var_name:b  
+line@2  node@13  const  const_type: int const_value: 11    
+line@2  node@14  const  const_type: int const_value: 11    
+line@3  node@15  stmt  stmt_type: decl  children: [ @16 @19 @21 ]  
+line@3  node@16  type  type:int  
+line@3  node@17  var  var_name:c  
+line@3  node@18  const  const_type: int const_value: 12    
+line@3  node@19  var  var_name:c  
+line@3  node@20  const  const_type: int const_value: 12    
+line@3  node@21  const  const_type: int const_value: 12 
+
+显然多了22-13=9个！！！
+
+一开始是13个结点0-12,没问题，  遍历生成ID有问题！！！
+
+-------------我的错误的遍历代码---------------------------------
+ // if (this->child != nullptr)
+    // {////////cout << this->nodeID<<"子结点不为空！！！" << endl;----用于debug
+        
+
+    //     this->child->genNodeId();
+    //     //this->child->sibling->genNodeId();
+
+    //     TreeNode *p = this->child->sibling;
+    //     while (p!=nullptr)
+    //     {
+    //         p->genNodeId();
+    //         p = p->sibling;
+    //     }
+    // }
+    // else
+    // {////////cout << this->nodeID<<"子结点为空！！！" << endl;----用于debug
+        
+    //     TreeNode *p = this->sibling;
+    //     while (p!=nullptr)
+    //     {
+    //         p->nodeID = new0_nodeID++;
+    //         p = p->sibling;
+    //     }
+    // }
+    ------------------------
+
+啊直接参考网上的先序遍历！！！很简单！！！
+
+-------------------
+void TreeNode::genNodeId()
+{
+    if(this==nullptr)
+        return;
+    this->nodeID = new0_nodeID++;
+
+    this->child->genNodeId();
+    this->sibling->genNodeId();
+    
+}
+---------------------------
+
+Hello!!!!!!!!!!
+root!=NULL
+line@0   node@0   prog                           children: [ @1 @5 @9 ]  
+line@1   node@1   stmt        stmt_type: decl    children: [ @2 @3 @4 ]  
+line@1   node@2   type             type: int     
+line@1   node@3   var          var_name: a       
+line@1   node@4   const      const_type: int      
+line@2   node@5   stmt        stmt_type: decl    children: [ @6 @7 @8 ]  
+line@2   node@6   type             type: int     
+line@2   node@7   var          var_name: b       
+line@2   node@8   const      const_type: int      
+line@3   node@9   stmt        stmt_type: decl    children: [ @10 @11 @12 ]  
+line@3   node@10  type             type: int     
+line@3   node@11  var          var_name: c       
+line@3   node@12  const      const_type: int    
+---------------------------------------------------------
+
+
+
+git的问题----直接重新初始化本地仓库，强制重新提交吧
+        https://www.cnblogs.com/chinxi/p/6139469.html
+        https://blog.csdn.net/qq_39551390/article/details/80889439
+
+        （error: object file .git/objects/* is empty...）的解决方案及对git版本库文件的了解
+
+        error: object file .git/objects/9a/83e9c5b3d697d12a2e315e1777ceaf27ea1bab is empty
+        fatal: loose object 9a83e9c5b3d697d12a2e315e1777ceaf27ea1bab (stored
+        in .git/objects/9a/83e9c5b3d697d12a2e315e1777ceaf27ea1bab) is corrupt
+
+
+
+-------------------------------------
+
+
+
+11.28.12:00
+至此实现了简单的声明语句的处理
+
+作用域需要符号表！？？？好难？？ 一个作用域一个符号表，符号表数组？？
+
+----------------------------
+开始词法语法的定义！！
+
+注意bool的识别要在ID 之前！！！{BOOL}{。。。}  {ID}{。。。}
+
+不支持0？？？？
+
+
+--------------------------
+shen@ubuntu:~/cp/lab5/2$ make
+flex --noyywrap -o src/main.l.yy.cpp  src/main.l 
+bison -o src/main.tab.cpp --defines=src/main.tab.h -v src/main.y
+
+src/main.y: 警告: 1 shift/reduce conflict [-Wconflicts-sr]
+
+g++ -Wall -Wextra -std=c++11  ./src/main.cpp ./src/main.l.yy.cpp ./src/main.tab.cpp ./src/tree.cpp ./src/type.cpp -o ./bin/main
+src/main.l:14:34: warning: "/*" within comment [-Wcomment]
+ BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
+                                  ^
+src/main.l.yy.cpp: In function ‘int yy_get_next_buffer()’:
+src/main.l.yy.cpp:1334:44: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+  if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+                                            ^
+./bin/main <./tests/test  >./tests/result.txt
+cat ./tests/result.txt
+line@0   node@0   prog                                               children: @0 -> [ @1 @5 ]  
+line@1   node@1   stmt        stmt_type: decl                        children: @1 -> [ @2 @3 @4 ]  
+line@1   node@2   type             type: int                         
+line@1   node@3   var          var_name: a                           
+line@1   node@4   const      const_type: int     const_value: 10    
+line@2   node@5   stmt        stmt_type: decl                        children: @5 -> [ @6 @7 @8 ]  
+line@2   node@6   type             type: int                         
+line@2   node@7   var          var_name: a                           
+line@2   node@8   expr        expr_type: +       expr_value: 2       children: @8 -> [ @9 @10 ]  
+line@2   node@9   const      const_type: bool    const_value: 1    
+line@2   node@10  const      const_type: int     const_value: 2    
+
+
+
+
+
+src/main.y: 警告: 1 shift/reduce conflict [-Wconflicts-sr]?????????
+
+
+????
+
+把1识别成0？？
+因为bool值设置为1 0 会对整型影响！！？？？
+----------------------------------------------------------
+
+
+
+
+if else 语句！！  突然就可以了稀里糊涂？？难道不应该加很多杂乱信息在lex文件？？
+
+---------------------
+shen@ubuntu:~/cp/lab5/2$ make
+flex --noyywrap -o src/main.l.yy.cpp  src/main.l 
+bison -o src/main.tab.cpp --defines=src/main.tab.h -v src/main.y
+src/main.y: 警告: 160 shift/reduce conflicts [-Wconflicts-sr]
+src/main.y: 警告: 1 reduce/reduce conflict [-Wconflicts-rr]
+g++ -Wall -Wextra -std=c++11  ./src/main.cpp ./src/main.l.yy.cpp ./src/main.tab.cpp ./src/tree.cpp ./src/type.cpp -o ./bin/main
+src/main.l:14:34: warning: "/*" within comment [-Wcomment]
+ BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
+                                  ^
+src/main.l.yy.cpp: In function ‘int yy_get_next_buffer()’:
+src/main.l.yy.cpp:1379:44: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+  if ((int) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+                                            ^
+./bin/main <./tests/test.c  >./tests/result.txt
+cat ./tests/result.txt
+0 |  node@0   program                             children: @0 -> [ @1 ]  
+1 |  node@1   stmt         stmt_type: if          children: @1 -> [ @2 @5 ]  
+1 |  node@2   expr         expr_type: ==          children: @2 -> [ @3 @4 ]  
+1 |  node@3   var           var_name: a           
+1 |  node@4   const       const_type: int         
+3 |  node@5   stmt         stmt_type: assign      children: @5 -> [ @6 @7 ]  
+3 |  node@6   var           var_name: b           
+3 |  node@7   const       const_type: int 
+
+if(a==1)
+{
+    b = 1;
+}
+------------------
+
+
+突然成功了，但是我的是强制有括号的,定义语句块 （statements）
+
+这个不能运行？？？？
+while (a < 1)
+{
+a /= 3;
+}
+while(a>=888)
+{
+a += 6666;
+}
+
+
+
+
+
+
+
+
+src/main.y:13:1: error: ‘stack’ does not name a type
+ stack< map < int,pair<string,string> > > ST_stack;
+ ^
+src/main.y:14:1: error: ‘stack’ does not name a type
+ stack<int> NUM_stack;
+ ^
+src/main.y:16:1: error: ‘map’ does not name a type
+ map<int,pair<string,string> > main_table,t_top;
+ ^
+src/main.y:19:1: error: ‘ST_stack’ does not name a type
+ ST_stack.push(main_table);NUM_stack.push(num0);
+ ^
+src/main.y:19:27: error: ‘NUM_stack’ does not name a type
+ ST_stack.push(main_table);NUM_stack.push(num0);
+                           ^
+src/main.y:21:1: error: ‘t_top’ does not name a type
+ t_top=ST_stack.top();//top作为指针！！！指向当前栈顶的内容
+ ^
+src/main.y:22:1: error: ‘n_top’ does not name a type
+ n_top=NUM_stack.top();
+
+
+解决了，在定义段只能声明！！！！！
+
+在与语义动作里才能定义。
+ST_stack.push(main_table);NUM_stack.push(num0);
+
+t_top=ST_stack.top();//top作为指针！！！指向当前栈顶的内容
+n_top=NUM_stack.top();
+
+结果显示 主函数的大括号不被识别为第一层，需要修改产生式解决了
+
+ Type MAIN LPAREN RPAREN LBRACE {} statements RBRACE {
+        root = new TreeNode($1->lineno, NODE_PROG); root->addChild($6);
+        }
+
+        这个就段错误！！！！！！？？？？
+
+对于语法分析程序中的每一个语法规则，都有相应的C/C++语句来做一些额外的处理，这个额外的处理就是语法动作。不过语法动作和词法动作的不同之处在于，语法动作允许嵌入式的语法动作，而词法动作不行。
+尽管yacc的语法分析技术只允许动作在规则的末端，但yacc可以自动模拟嵌入在规则内部的动作。如果在规则内部写入一个动作，yacc就会创造一个右侧为空并且左边是自动生成的名字规则，使得嵌入的动作进高规则的动作里去，用自动成成的名字代替最初的规则内的动作。
+例如： 下面的句子是等价的
+thing : A {printf("I am A") ;} B
+thing : A fakename B;
+fakename : {printf("I am A");}
+这种方式将A植作为$1,  规则末端的动作可将嵌入式动作的值作为$2,B的值为$3.

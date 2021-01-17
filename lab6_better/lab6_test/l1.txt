@@ -1,0 +1,168 @@
+./test.out --level 1
+------ Test Info ------
+Target		x86
+Personal Code	False
+Level		1
+Compiler	./main.out
+Error Log	True
+------ Info End  ------
+---Begin Generate Standard Output---
+00_main......Done!
+01_basic_out......Done!
+02_var_out......Done!
+03_basic_in......Done!
+04_if......Done!
+05_if_notin......Done!
+06_if_else......Done!
+07_if_else_notin......Done!
+08_expr_add......Done!
+09_expr_sub......Done!
+10_expr_mul......Done!
+11_expr_div......Done!
+12_expr_mod......Done!
+13_expr_minus......Done!
+14_expr_eq......Done!
+15_expr_gr......Done!
+16_expr_lr......Done!
+17_expr_ge......Done!
+18_expr_le......Done!
+19_expr_ne......Done!
+20_expr_or......Done!
+21_expr_and......Done!
+22_expr_not......Done!
+23_loop_while......Done!
+24_loop_for......Done!
+25_comment......Done!
+26_multi_var......Done!
+27_char......Done!
+28_prior_1......Done!
+29_prior_2......Done!
+30_prior_3......Done!
+31_prior_4......Done!
+32_prior_5......Done!
+33_expr_multi_assign......Done!
+34_if_else_multista......Done!
+35_while_if......Done!
+36_if_complex_expr......Done!
+37_neg_div_mod......Done!
+---End Generate Standard Output---
+---Begin Generate Assembly---
+00_main......Done!
+01_basic_out......Done!
+02_var_out......Done!
+03_basic_in......Done!
+04_if......Done!
+05_if_notin......Done!
+06_if_else......Done!
+07_if_else_notin......Done!
+08_expr_add......Done!
+09_expr_sub......Done!
+10_expr_mul......Done!
+11_expr_div......Done!
+12_expr_mod......Done!
+13_expr_minus......Done!
+14_expr_eq......Done!
+15_expr_gr......Done!
+16_expr_lr......Done!
+17_expr_ge......Done!
+18_expr_le......Done!
+19_expr_ne......Done!
+20_expr_or......Done!
+21_expr_and......Done!
+22_expr_not......Done!
+23_loop_while......Done!
+24_loop_for......Done!
+25_comment......Done!
+26_multi_var......Done!
+27_char......Done!
+28_prior_1......Done!
+29_prior_2......Done!
+30_prior_3......Done!
+31_prior_4......Done!
+32_prior_5......Done!
+33_expr_multi_assign......Done!
+34_if_else_multista......Done!
+35_while_if......Done!
+36_if_complex_expr......Done!
+37_neg_div_mod......Done!
+---End Generate Assembly---
+---Begin Generate Output---
+00_main......Done!
+01_basic_out......Done!
+02_var_out......Done!
+03_basic_in......Done!
+04_if......Done!
+05_if_notin......Done!
+06_if_else......Done!
+07_if_else_notin......Done!
+08_expr_add......Done!
+09_expr_sub......Done!
+10_expr_mul......Done!
+11_expr_div......Done!
+12_expr_mod......Done!
+13_expr_minus......Done!
+14_expr_eq......Done!
+15_expr_gr......Done!
+16_expr_lr......Done!
+17_expr_ge......Done!
+18_expr_le......Done!
+19_expr_ne......Done!
+20_expr_or......Done!
+21_expr_and......Done!
+22_expr_not......Done!
+23_loop_while......Done!
+24_loop_for......Done!
+25_comment......Done!
+26_multi_var......Done!
+27_char......Done!
+28_prior_1......Done!
+29_prior_2......Done!
+30_prior_3......Done!
+31_prior_4......Done!
+32_prior_5......Done!
+33_expr_multi_assign......Done!
+34_if_else_multista......Done!
+35_while_if......Done!
+36_if_complex_expr......Done!
+37_neg_div_mod......Done!
+---End Generate Output---
+---Begin Compare Output---
+00_main......OK!
+01_basic_out......OK!
+02_var_out......OK!
+03_basic_in......OK!
+04_if......OK!
+05_if_notin......OK!
+06_if_else......OK!
+07_if_else_notin......OK!
+08_expr_add......OK!
+09_expr_sub......OK!
+10_expr_mul......OK!
+11_expr_div......OK!
+12_expr_mod......OK!
+13_expr_minus......OK!
+14_expr_eq......OK!
+15_expr_gr......OK!
+16_expr_lr......OK!
+17_expr_ge......OK!
+18_expr_le......OK!
+19_expr_ne......OK!
+20_expr_or......OK!
+21_expr_and......OK!
+22_expr_not......OK!
+23_loop_while......OK!
+24_loop_for......OK!
+25_comment......OK!
+26_multi_var......OK!
+27_char......OK!
+28_prior_1......OK!
+29_prior_2......OK!
+30_prior_3......OK!
+31_prior_4......OK!
+32_prior_5......OK!
+33_expr_multi_assign......OK!
+34_if_else_multista......OK!
+35_while_if......OK!
+36_if_complex_expr......OK!
+37_neg_div_mod......OK!
+---End Compare Output---

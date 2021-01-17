@@ -1,0 +1,18 @@
+if !!
+if归约！！！
+statement!!!归约
+10
+Hello!!!
+0 |  node@0   program                             children: @0 -> [ @1 ]  
+5 |  node@1   stmt         stmt_type: decl        children: @1 -> [ @2 @3 @4 ]  
+5 |  node@2   type              type: int         
+5 |  node@3   var           var_name: a           
+5 |  node@4   const       const_type: int         
+total:16!!!???
+
+-----------------------------
+int a = 1;
+if (a == 3)
+{
+    int a = 333;
+}

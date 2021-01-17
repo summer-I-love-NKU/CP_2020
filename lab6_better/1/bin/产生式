@@ -1,0 +1,29 @@
+
+
+
+decl：
+int a=1
+int a
+decl,b=1;
+decl,b;
+
+一种需要四个！！！
+int *a=&p;
+int *a;
+decl,*a=&qq;
+decl,&q,*a;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
